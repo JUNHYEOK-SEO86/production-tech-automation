@@ -51,6 +51,45 @@
             opacity: 0;
             display: none;
         }
+        .nav-link {
+            color: #94a3b8;
+        }
+        .nav-link:hover {
+            background-color: rgba(255, 255, 255, 0.06);
+            color: #e2e8f0;
+        }
+        .nav-link.active {
+            background: #2563eb;
+            color: #ffffff;
+            font-weight: 600;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+        }
+        .screen-panel.hidden {
+            display: none;
+        }
+        .equip-thumb {
+            width: 28px;
+            height: 28px;
+            border-radius: 6px;
+            object-fit: cover;
+            background: #e2e8f0;
+            border: 1px solid #cbd5e1;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+        #equip-hover-preview {
+            position: fixed;
+            z-index: 100;
+            width: 160px;
+            height: 160px;
+            border-radius: 10px;
+            border: 2px solid #2563eb;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+            background: #fff;
+            object-fit: contain;
+            pointer-events: none;
+            display: none;
+        }
     </style>
 </head>
 <body class="bg-[#eef2f6] text-slate-800 h-screen flex flex-col overflow-hidden">
@@ -72,28 +111,28 @@
             <nav class="flex-1 px-3 py-4 space-y-2 overflow-y-auto text-sm">
                 <div class="text-xs font-semibold text-slate-400 px-3 py-1">1. 개발착수 (공법검토)</div>
                 <div class="pl-2 space-y-1">
-                    <a href="#" class="flex items-center px-3 py-2 rounded-lg bg-blue-600 text-white font-medium shadow-sm">
+                    <button type="button" onclick="showScreen('1-1')" id="nav-1-1" class="nav-link w-full text-left flex items-center px-3 py-2 rounded-lg transition-colors">
                         <i class="fa-solid fa-angles-right w-4 mr-2 text-xs"></i> 1-1. 목표 C/T & 공정 수립
-                    </a>
-                    <a href="#" class="flex items-center px-3 py-2 rounded-lg text-slate-400 hover:bg-slate-800 hover:text-slate-200 transition-colors">
+                    </button>
+                    <button type="button" onclick="showScreen('1-2')" id="nav-1-2" class="nav-link w-full text-left flex items-center px-3 py-2 rounded-lg transition-colors">
                         <i class="fa-solid fa-circle w-2 h-2 rounded-full bg-slate-600 mr-3 ml-1"></i> 1-2. 설비 공법 검토
-                    </a>
+                    </button>
                 </div>
 
                 <div class="pt-4 text-xs font-semibold text-slate-500 px-3 py-1">다음 단계</div>
                 <div class="space-y-1">
-                    <a href="#" class="flex items-center px-3 py-2 rounded-lg text-slate-400 hover:bg-slate-800 hover:text-slate-200 transition-colors">
+                    <button type="button" onclick="showScreen('2')" id="nav-2" class="nav-link w-full text-left flex items-center px-3 py-2 rounded-lg transition-colors">
                         <i class="fa-solid fa-cart-shopping w-5 mr-2 text-center text-slate-500"></i> 2. 품의 / 발주
-                    </a>
-                    <a href="#" class="flex items-center px-3 py-2 rounded-lg text-slate-400 hover:bg-slate-800 hover:text-slate-200 transition-colors">
+                    </button>
+                    <button type="button" onclick="showScreen('3')" id="nav-3" class="nav-link w-full text-left flex items-center px-3 py-2 rounded-lg transition-colors">
                         <i class="fa-solid fa-screwdriver-wrench w-5 mr-2 text-center text-slate-500"></i> 3. 설치 / 품힉 (T/O)
-                    </a>
-                    <a href="#" class="flex items-center px-3 py-2 rounded-lg text-slate-400 hover:bg-slate-800 hover:text-slate-200 transition-colors">
+                    </button>
+                    <button type="button" onclick="showScreen('4')" id="nav-4" class="nav-link w-full text-left flex items-center px-3 py-2 rounded-lg transition-colors">
                         <i class="fa-solid fa-truck-fast w-5 mr-2 text-center text-slate-500"></i> 4. 운송 & HTS 코드
-                    </a>
-                    <a href="#" class="flex items-center px-3 py-2 rounded-lg text-slate-400 hover:bg-slate-800 hover:text-slate-200 transition-colors">
+                    </button>
+                    <button type="button" onclick="showScreen('5')" id="nav-5" class="nav-link w-full text-left flex items-center px-3 py-2 rounded-lg transition-colors">
                         <i class="fa-solid fa-clipboard-check w-5 mr-2 text-center text-slate-500"></i> 5. 완료보고 & 집계
-                    </a>
+                    </button>
                 </div>
             </nav>
 
@@ -137,8 +176,8 @@
                 </div>
             </div>
 
-            <!-- Main Layout Split Grid -->
-            <div class="flex-1 grid grid-cols-12 gap-6 overflow-hidden">
+            <!-- Screen 1-1: 목표 C/T & 공정 수립 -->
+            <div id="screen-1-1" class="screen-panel flex-1 grid grid-cols-12 gap-6 overflow-hidden">
 
                 <!-- Left Column (Span 7): Top Input Bar & Bottom Large CAD Layout -->
                 <div class="col-span-7 flex flex-col space-y-6 overflow-y-auto pr-1">
@@ -268,8 +307,188 @@
 
             </div>
 
+            <!-- Screen 1-2: 설비 공법 검토 -->
+            <div id="screen-1-2" class="screen-panel hidden flex-1 grid grid-cols-12 gap-6 overflow-hidden">
+
+                <!-- Left Column: 제품 이미지 + 설비 마스터 DB 관리 -->
+                <div class="col-span-7 flex flex-col space-y-6 overflow-y-auto pr-1">
+
+                    <!-- Product Image Upload -->
+                    <div class="bg-[#1f293d] rounded-xl shadow-md overflow-hidden flex flex-col border border-slate-700" style="height: 220px;">
+                        <div class="bg-[#111827] text-white px-4 py-3 flex justify-between items-center shadow-inner border-b border-slate-800">
+                            <h3 class="font-bold text-sm tracking-wide flex items-center"><i class="fa-solid fa-image text-blue-400 mr-2"></i> 제품 이미지</h3>
+                            <label class="cursor-pointer bg-blue-600 hover:bg-blue-500 text-white px-3 py-1 rounded text-xs font-medium shadow flex items-center">
+                                <i class="fa-solid fa-upload mr-1"></i> 이미지 업로드
+                                <input type="file" accept="image/*" class="hidden" onchange="handleProductImageUpload(event)">
+                            </label>
+                        </div>
+                        <div id="product-image-dropzone" class="flex-1 layout-dropzone relative flex items-center justify-center overflow-hidden">
+                            <div id="product-image-placeholder" class="text-center text-slate-400">
+                                <div class="text-xl font-bold tracking-wider text-slate-300">제품 이미지 업로드</div>
+                            </div>
+                            <img id="product-image-preview" src="" alt="제품 이미지" class="absolute inset-0 w-full h-full object-contain pointer-events-none">
+                        </div>
+                    </div>
+
+                    <!-- Equipment Master DB -->
+                    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5 flex-1 flex flex-col min-h-[380px]">
+                        <div class="flex justify-between items-center mb-3">
+                            <div class="flex items-center space-x-2">
+                                <i class="fa-solid fa-database text-blue-600"></i>
+                                <h3 class="font-bold text-slate-800 text-sm">설비 마스터 DB (Supabase)</h3>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <label class="cursor-pointer bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded text-xs font-semibold transition-colors flex items-center shadow-sm">
+                                    <i class="fa-solid fa-file-excel mr-1.5"></i> 엑셀 DB 업로드
+                                    <input type="file" accept=".xlsx,.xls" class="hidden" onchange="handleEquipmentExcelUpload(event)">
+                                </label>
+                                <button onclick="addEquipmentManual()" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded text-xs font-medium transition-colors flex items-center shadow-sm">
+                                    <i class="fa-solid fa-plus mr-1"></i> 설비 추가
+                                </button>
+                            </div>
+                        </div>
+                        <p class="text-[11px] text-slate-500 mb-3">엑셀 첫 행은 <strong>설비명 / 규격 / 단가</strong> 순서의 헤더로 인식합니다. 이미지는 각 행의 업로드 버튼으로 개별 등록하세요.</p>
+                        <div id="equipment-master-list" class="flex-1 overflow-y-auto border border-slate-200 rounded-lg divide-y divide-slate-100"></div>
+                    </div>
+
+                </div>
+
+                <!-- Right Column: 공정별 설비 선택 -->
+                <div class="col-span-5 flex flex-col space-y-6 overflow-y-auto pr-1">
+                    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5 flex-1 flex flex-col">
+                        <div class="flex items-center space-x-2 mb-3">
+                            <i class="fa-solid fa-diagram-project text-blue-600"></i>
+                            <h3 class="font-bold text-slate-800 text-sm">공정별 사용 설비 선택 - <span class="text-blue-600" id="eq-current-item-badge">세미모듈</span></h3>
+                        </div>
+                        <div class="flex items-center gap-2 bg-blue-600 text-white py-2 px-3 rounded-t text-xs font-bold">
+                            <div class="w-20 shrink-0 text-center">공정 NO</div>
+                            <div class="w-24 shrink-0 text-center">공정명</div>
+                            <div class="flex-1 text-left pl-1">사용 설비</div>
+                        </div>
+                        <div id="equipment-assign-table" class="flex-1 overflow-y-auto border border-t-0 border-slate-200 rounded-b divide-y divide-slate-100"></div>
+                        <div class="bg-slate-50 p-2.5 rounded-lg border border-slate-200 text-[11px] text-slate-600 mt-3">
+                            <p>• 썸네일에 <strong>마우스를 올리면</strong> 설비 이미지가 크게 표시됩니다.</p>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Screen 2: 품의 / 발주 -->
+            <div id="screen-2" class="screen-panel hidden flex-1 grid grid-cols-12 gap-6 overflow-hidden">
+
+                <!-- Left Column: 설치 레이아웃 + 설치자재 -->
+                <div class="col-span-7 flex flex-col space-y-6 overflow-y-auto pr-1">
+
+                    <div class="bg-[#1f293d] rounded-xl shadow-md overflow-hidden flex flex-col flex-1 min-h-[320px] border border-slate-700">
+                        <div class="bg-[#111827] text-white px-4 py-3 flex justify-between items-center shadow-inner border-b border-slate-800">
+                            <h3 class="font-bold text-sm tracking-wide flex items-center"><i class="fa-solid fa-map text-blue-400 mr-2"></i> 설치 레이아웃</h3>
+                            <div class="flex space-x-2 items-center">
+                                <button class="bg-slate-700 hover:bg-slate-600 text-white px-3 py-1 rounded text-xs font-medium shadow cursor-grab active:cursor-grabbing border border-slate-600" draggable="true" ondragstart="handlePaletteDragStart(event, 'PO-DRAG')">
+                                    <i class="fa-solid fa-arrows-up-down-left-right mr-1"></i> 설비 배치
+                                </button>
+                                <label class="cursor-pointer bg-blue-600 hover:bg-blue-500 text-white px-3 py-1 rounded text-xs font-medium shadow flex items-center">
+                                    <i class="fa-solid fa-upload mr-1"></i> 이미지 업로드
+                                    <input type="file" accept="image/*" class="hidden" onchange="handlePoLayoutUpload(event)">
+                                </label>
+                            </div>
+                        </div>
+                        <div id="po-dropzone" class="flex-1 layout-dropzone relative flex flex-col items-center justify-center p-4 overflow-hidden" ondragover="allowDrop(event)" ondrop="dropPoNode(event)">
+                            <div id="po-placeholder" class="text-center text-slate-400">
+                                <div class="text-xs font-medium text-slate-500 mb-1">드래그 가능</div>
+                                <div class="text-xl font-bold tracking-wider text-slate-300">레이아웃 업로드</div>
+                            </div>
+                            <img id="po-preview-img" src="" alt="설치 레이아웃" class="absolute inset-0 w-full h-full object-contain pointer-events-none">
+                            <div id="po-nodes-layer" class="absolute inset-0"></div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5 flex flex-col h-[220px]">
+                        <div class="flex justify-between items-center mb-3">
+                            <div class="flex items-center space-x-2">
+                                <i class="fa-solid fa-toolbox text-blue-600"></i>
+                                <h3 class="font-bold text-slate-800 text-sm">설치자재</h3>
+                            </div>
+                            <button onclick="addInstallMaterial()" class="bg-blue-600 hover:bg-blue-700 text-white px-2.5 py-1 rounded text-xs font-medium transition-colors flex items-center shadow-sm">
+                                <i class="fa-solid fa-plus mr-1"></i> 자재 추가
+                            </button>
+                        </div>
+                        <div class="flex items-center gap-2 bg-slate-100 text-slate-600 py-1.5 px-2 rounded-t text-[11px] font-bold border border-slate-200 border-b-0">
+                            <div class="flex-1">자재명</div>
+                            <div class="w-16 text-center">수량</div>
+                            <div class="w-24 text-center">단가</div>
+                            <div class="w-24 text-center">금액</div>
+                            <div class="w-6"></div>
+                        </div>
+                        <div id="install-material-list" class="flex-1 overflow-y-auto border border-slate-200 rounded-b divide-y divide-slate-100"></div>
+                    </div>
+
+                </div>
+
+                <!-- Right Column: 품의 대상 설비 목록 + 투자비 총계 -->
+                <div class="col-span-5 flex flex-col space-y-6 overflow-y-auto pr-1">
+
+                    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5 flex-1 flex flex-col min-h-[360px]">
+                        <div class="flex justify-between items-center mb-3">
+                            <div class="flex items-center space-x-2">
+                                <i class="fa-solid fa-cart-shopping text-blue-600"></i>
+                                <h3 class="font-bold text-slate-800 text-sm">품의 대상 설비 - <span class="text-blue-600" id="po-current-item-badge">세미모듈</span></h3>
+                            </div>
+                            <button onclick="addPurchaseRow()" class="bg-blue-600 hover:bg-blue-700 text-white px-2.5 py-1 rounded text-xs font-medium transition-colors flex items-center shadow-sm">
+                                <i class="fa-solid fa-plus mr-1"></i> 행 추가
+                            </button>
+                        </div>
+                        <div class="flex items-center gap-1.5 bg-blue-600 text-white py-2 px-2 rounded-t text-[11px] font-bold">
+                            <div class="w-16 shrink-0 text-center">공정</div>
+                            <div class="w-24 shrink-0 text-center">설비</div>
+                            <div class="w-14 shrink-0 text-center">수량</div>
+                            <div class="w-16 shrink-0 text-center">단가</div>
+                            <div class="flex-1 text-center">금액</div>
+                            <div class="w-5 shrink-0"></div>
+                        </div>
+                        <div id="purchase-table" class="flex-1 overflow-y-auto border border-t-0 border-slate-200 rounded-b divide-y divide-slate-100"></div>
+                    </div>
+
+                    <div class="bg-gradient-to-br from-blue-600 to-blue-800 rounded-xl shadow-md p-5 text-white">
+                        <p class="text-xs font-medium text-blue-200 mb-1">투자비 총계 (설비 + 설치자재)</p>
+                        <p class="text-3xl font-bold tracking-wide" id="investment-total">0 원</p>
+                    </div>
+
+                </div>
+
+            </div>
+
+            <!-- Screens 3~5: 준비 중 -->
+            <div id="screen-3" class="screen-panel hidden flex-1 flex items-center justify-center">
+                <div class="text-center text-slate-400">
+                    <i class="fa-solid fa-screwdriver-wrench text-4xl mb-3"></i>
+                    <p class="font-semibold">3. 설치 / 품힉 (T/O)</p>
+                    <p class="text-xs mt-1">준비 중인 화면입니다.</p>
+                </div>
+            </div>
+            <div id="screen-4" class="screen-panel hidden flex-1 flex items-center justify-center">
+                <div class="text-center text-slate-400">
+                    <i class="fa-solid fa-truck-fast text-4xl mb-3"></i>
+                    <p class="font-semibold">4. 운송 & HTS 코드</p>
+                    <p class="text-xs mt-1">준비 중인 화면입니다.</p>
+                </div>
+            </div>
+            <div id="screen-5" class="screen-panel hidden flex-1 flex items-center justify-center">
+                <div class="text-center text-slate-400">
+                    <i class="fa-solid fa-clipboard-check text-4xl mb-3"></i>
+                    <p class="font-semibold">5. 완료보고 & 집계</p>
+                    <p class="text-xs mt-1">준비 중인 화면입니다.</p>
+                </div>
+            </div>
+
         </main>
     </div>
+
+    <img id="equip-hover-preview" alt="설비 미리보기">
+
+    <!-- Supabase & Excel Libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.116.0/dist/umd/supabase.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
     <!-- JavaScript Application Logic -->
     <script>
@@ -320,8 +539,13 @@
         let ctStatusData = {};
         let cadData = {};
         let inputsData = {};
+        let productImageData = {};
+        let equipmentAssignData = {};
+        let poData = {};
+        let installMaterialData = {};
         let itemKeys = [];
         let currentItem = "세미모듈";
+        let equipmentList = [];
 
         // 천단위 콤마 포맷 유틸리티
         function formatNumberWithCommas(value) {
@@ -350,6 +574,8 @@
             loadData();
             renderItemTabs();
             renderAll();
+            showScreen('1-1');
+            loadEquipmentList();
         };
 
         function saveDataAuto() {
@@ -360,8 +586,8 @@
             inputsData[currentItem].hours = document.getElementById('input-hours').value;
             inputsData[currentItem].days = document.getElementById('input-days').value;
 
-            const state = { itemData, ctStatusData, cadData, inputsData, itemKeys, currentItem };
-            localStorage.setItem('PE_AMS_STATE_V14', JSON.stringify(state));
+            const state = { itemData, ctStatusData, cadData, inputsData, productImageData, equipmentAssignData, poData, installMaterialData, itemKeys, currentItem };
+            localStorage.setItem('PE_AMS_STATE_V15', JSON.stringify(state));
         }
 
         function saveDataManual() {
@@ -370,7 +596,7 @@
         }
 
         function loadData() {
-            const saved = localStorage.getItem('PE_AMS_STATE_V14');
+            const saved = localStorage.getItem('PE_AMS_STATE_V15');
             if(saved) {
                 try {
                     const parsed = JSON.parse(saved);
@@ -379,6 +605,10 @@
                         ctStatusData = migrateCtStatusData(parsed.ctStatusData, parsed.ctHeadersData);
                         cadData = parsed.cadData || {};
                         inputsData = parsed.inputsData || {};
+                        productImageData = parsed.productImageData || {};
+                        equipmentAssignData = parsed.equipmentAssignData || {};
+                        poData = parsed.poData || {};
+                        installMaterialData = parsed.installMaterialData || {};
                         itemKeys = parsed.itemKeys || Object.keys(itemData);
                         currentItem = parsed.currentItem || itemKeys[0];
                         return;
@@ -389,6 +619,10 @@
             ctStatusData = JSON.parse(JSON.stringify(defaultCtStatusData));
             cadData = JSON.parse(JSON.stringify(defaultCadData));
             inputsData = { "세미모듈": { ...defaultInputs } };
+            productImageData = {};
+            equipmentAssignData = {};
+            poData = {};
+            installMaterialData = {};
             itemKeys = Object.keys(itemData);
             currentItem = "세미모듈";
         }
@@ -416,7 +650,7 @@
 
         function exportBackupFile() {
             saveDataAuto();
-            const state = { itemData, ctStatusData, cadData, inputsData, itemKeys, currentItem };
+            const state = { itemData, ctStatusData, cadData, inputsData, productImageData, equipmentAssignData, poData, installMaterialData, itemKeys, currentItem };
             const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(state, null, 2));
             const dlAnchor = document.createElement('a');
             dlAnchor.setAttribute("href", dataStr);
@@ -438,6 +672,10 @@
                             ctStatusData = migrateCtStatusData(parsed.ctStatusData, parsed.ctHeadersData);
                             cadData = parsed.cadData || {};
                             inputsData = parsed.inputsData || {};
+                            productImageData = parsed.productImageData || {};
+                            equipmentAssignData = parsed.equipmentAssignData || {};
+                            poData = parsed.poData || {};
+                            installMaterialData = parsed.installMaterialData || {};
                             itemKeys = parsed.itemKeys || Object.keys(itemData);
                             currentItem = itemKeys[0] || "세미모듈";
                             saveDataAuto();
@@ -517,6 +755,10 @@
                 delete ctStatusData[name];
                 delete cadData[name];
                 delete inputsData[name];
+                delete productImageData[name];
+                delete equipmentAssignData[name];
+                delete poData[name];
+                delete installMaterialData[name];
                 itemKeys = itemKeys.filter(k => k !== name);
                 currentItem = itemKeys[0];
                 renderItemTabs();
@@ -537,6 +779,12 @@
             renderProcessTable();
             renderCtStatusTable();
             renderCadState();
+            renderProductImage();
+            renderEquipmentAssignTable();
+            renderPoLayoutState();
+            renderPurchaseTable();
+            renderInstallMaterials();
+            updateInvestmentTotal();
         }
 
         function addNewItemScreen() {
@@ -548,6 +796,10 @@
                 itemData[clean] = [{ id: "OP10", name: "신규 공정" }];
                 ctStatusData[clean] = [{ id: "OP10", items: makeDefaultCtItems("0.0", "0.0", "0.0") }];
                 cadData[clean] = { image: "", nodes: [] };
+                productImageData[clean] = "";
+                equipmentAssignData[clean] = {};
+                poData[clean] = { image: "", nodes: [] };
+                installMaterialData[clean] = [];
                 inputsData[clean] = { ...defaultInputs };
                 itemKeys.push(clean);
                 currentItem = clean;
@@ -585,6 +837,8 @@
             });
             renderCtStatusTable();
             renderPlacedNodes();
+            renderEquipmentAssignTable();
+            renderPurchaseTable();
         }
 
         function renderCtStatusTable() {
@@ -906,6 +1160,594 @@
             cadData[currentItem].nodes.splice(idx, 1);
             renderPlacedNodes();
             saveDataAuto();
+        }
+
+        // ===================== 화면 전환 (사이드바 메뉴) =====================
+        function showScreen(id) {
+            document.querySelectorAll('.screen-panel').forEach(el => el.classList.add('hidden'));
+            const target = document.getElementById('screen-' + id);
+            if (target) target.classList.remove('hidden');
+
+            document.querySelectorAll('.nav-link').forEach(el => el.classList.remove('active'));
+            const navEl = document.getElementById('nav-' + id);
+            if (navEl) navEl.classList.add('active');
+
+            if (id === '1-2') {
+                renderEquipmentMasterList();
+                renderEquipmentAssignTable();
+            } else if (id === '2') {
+                renderPoLayoutState();
+                renderPurchaseTable();
+                renderInstallMaterials();
+                updateInvestmentTotal();
+            }
+        }
+
+        // ===================== Supabase 설비 마스터 DB =====================
+        const SUPABASE_URL = "https://cfctbqnigvaiqqrqphfy.supabase.co";
+        const SUPABASE_ANON_KEY = "sb_publishable_fTqjSuCopqpGOZhlC66aKA_0WTibC6I";
+        const supabaseClient = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
+
+        async function loadEquipmentList() {
+            if (!supabaseClient) return;
+            const { data, error } = await supabaseClient.from('pe_ams_equipment').select('*').order('name', { ascending: true });
+            if (error) {
+                console.error('설비 목록을 불러오지 못했습니다.', error);
+                return;
+            }
+            equipmentList = data || [];
+            renderEquipmentMasterList();
+            renderEquipmentAssignTable();
+            renderPurchaseTable();
+        }
+
+        function findEquipment(id) {
+            return equipmentList.find(e => String(e.id) === String(id));
+        }
+
+        function renderEquipmentMasterList() {
+            const container = document.getElementById('equipment-master-list');
+            if (!container) return;
+            container.innerHTML = '';
+
+            if (equipmentList.length === 0) {
+                container.innerHTML = `<div class="p-4 text-center text-xs text-slate-400">등록된 설비가 없습니다. 엑셀 DB를 업로드하거나 설비를 추가하세요.</div>`;
+                return;
+            }
+
+            equipmentList.forEach(eq => {
+                const row = document.createElement('div');
+                row.className = "flex items-center gap-2 py-2 px-2 text-xs hover:bg-slate-50";
+
+                const thumb = eq.image_url
+                    ? `<img src="${eq.image_url}" class="equip-thumb" onmouseenter="showEquipHover(event, '${eq.image_url}')" onmouseleave="hideEquipHover()">`
+                    : `<div class="equip-thumb flex items-center justify-center text-slate-400"><i class="fa-solid fa-image text-[10px]"></i></div>`;
+
+                row.innerHTML = `
+                    <div class="shrink-0">${thumb}</div>
+                    <input type="text" value="${eq.name || ''}" oninput="updateEquipmentField(${eq.id}, 'name', this.value)" class="w-24 shrink-0 bg-slate-50 border border-slate-200 rounded px-1.5 py-1 text-xs font-semibold text-slate-800 focus:outline-none focus:border-blue-500" placeholder="설비명">
+                    <input type="text" value="${eq.spec || ''}" oninput="updateEquipmentField(${eq.id}, 'spec', this.value)" class="flex-1 min-w-0 bg-slate-50 border border-slate-200 rounded px-1.5 py-1 text-xs text-slate-600 focus:outline-none focus:border-blue-500" placeholder="규격">
+                    <input type="text" value="${formatNumberWithCommas(eq.unit_price || 0)}" oninput="onNumericInput(this); updateEquipmentField(${eq.id}, 'unit_price', this.value.replace(/,/g,''))" class="w-20 shrink-0 bg-slate-50 border border-slate-200 rounded px-1.5 py-1 text-xs text-right text-slate-800 focus:outline-none focus:border-blue-500" placeholder="단가">
+                    <label class="shrink-0 cursor-pointer bg-slate-200 hover:bg-slate-300 text-slate-700 px-2 py-1 rounded text-[10px] font-medium">
+                        <i class="fa-solid fa-image mr-1"></i>이미지
+                        <input type="file" accept="image/*" class="hidden" onchange="handleEquipmentImageUpload(${eq.id}, event)">
+                    </label>
+                    <button type="button" onclick="deleteEquipment(${eq.id})" class="shrink-0 p-1 text-slate-400 hover:text-rose-600"><i class="fa-solid fa-xmark"></i></button>
+                `;
+                container.appendChild(row);
+            });
+        }
+
+        async function addEquipmentManual() {
+            const name = prompt("설비명을 입력하세요:", "신규 설비");
+            if (!name || !name.trim()) return;
+            if (!supabaseClient) { alert("Supabase에 연결되어 있지 않습니다."); return; }
+            const { error } = await supabaseClient.from('pe_ams_equipment').insert({ name: name.trim(), spec: '', unit_price: 0 });
+            if (error) { alert("설비 추가에 실패했습니다. (" + error.message + ")"); return; }
+            loadEquipmentList();
+        }
+
+        async function updateEquipmentField(id, field, value) {
+            if (!supabaseClient) return;
+            const payload = {};
+            payload[field] = field === 'unit_price' ? (Number(value) || 0) : value;
+            const { error } = await supabaseClient.from('pe_ams_equipment').update(payload).eq('id', id);
+            if (error) { console.error(error); return; }
+            const eq = findEquipment(id);
+            if (eq) eq[field] = payload[field];
+            renderEquipmentAssignTable();
+            renderPurchaseTable();
+        }
+
+        async function deleteEquipment(id) {
+            if (!confirm("이 설비를 삭제하시겠습니까?")) return;
+            if (!supabaseClient) return;
+            const { error } = await supabaseClient.from('pe_ams_equipment').delete().eq('id', id);
+            if (error) { alert("삭제에 실패했습니다. (" + error.message + ")"); return; }
+            loadEquipmentList();
+        }
+
+        function handleEquipmentImageUpload(id, event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = async function (e) {
+                if (!supabaseClient) return;
+                const { error } = await supabaseClient.from('pe_ams_equipment').update({ image_url: e.target.result }).eq('id', id);
+                if (error) { alert("이미지 저장에 실패했습니다. (" + error.message + ")"); return; }
+                loadEquipmentList();
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function handleEquipmentExcelUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = async function (e) {
+                try {
+                    const wb = XLSX.read(e.target.result, { type: 'array' });
+                    const sheet = wb.Sheets[wb.SheetNames[0]];
+                    const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' });
+                    const dataRows = rows.slice(1).filter(r => r[0]);
+                    const records = dataRows.map(r => ({
+                        name: String(r[0] || '').trim(),
+                        spec: String(r[1] || '').trim(),
+                        unit_price: Number(String(r[2] || '0').replace(/[^0-9.-]/g, '')) || 0
+                    })).filter(r => r.name);
+
+                    if (records.length === 0) {
+                        alert("엑셀에서 읽을 수 있는 설비 데이터가 없습니다. (1행: 설비명/규격/단가 헤더, 2행부터 데이터)");
+                        return;
+                    }
+                    if (!supabaseClient) { alert("Supabase에 연결되어 있지 않습니다."); return; }
+                    const { error } = await supabaseClient.from('pe_ams_equipment').insert(records);
+                    if (error) { alert("업로드에 실패했습니다. (" + error.message + ")"); return; }
+                    await loadEquipmentList();
+                    alert(`${records.length}건의 설비 데이터를 업로드했습니다.`);
+                } catch (err) {
+                    console.error(err);
+                    alert("엑셀 파일을 읽는 중 오류가 발생했습니다.");
+                }
+            };
+            reader.readAsArrayBuffer(file);
+            event.target.value = '';
+        }
+
+        function showEquipHover(evt, url) {
+            if (!url) return;
+            const preview = document.getElementById('equip-hover-preview');
+            preview.src = url;
+            preview.style.display = 'block';
+            let x = evt.clientX + 16;
+            let y = evt.clientY + 16;
+            if (x + 160 > window.innerWidth) x = evt.clientX - 176;
+            if (y + 160 > window.innerHeight) y = evt.clientY - 176;
+            preview.style.left = x + 'px';
+            preview.style.top = y + 'px';
+        }
+
+        function hideEquipHover() {
+            document.getElementById('equip-hover-preview').style.display = 'none';
+        }
+
+        // ===================== 1-2 화면: 제품 이미지 =====================
+        function handleProductImageUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                productImageData[currentItem] = e.target.result;
+                renderProductImage();
+                saveDataAuto();
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function renderProductImage() {
+            const placeholder = document.getElementById('product-image-placeholder');
+            const img = document.getElementById('product-image-preview');
+            if (!placeholder || !img) return;
+            const src = productImageData[currentItem];
+            if (src) {
+                placeholder.classList.add('hidden');
+                img.src = src;
+                img.classList.remove('hidden');
+            } else {
+                placeholder.classList.remove('hidden');
+                img.classList.add('hidden');
+                img.src = '';
+            }
+        }
+
+        // ===================== 1-2 화면: 공정별 사용 설비 선택 =====================
+        function renderEquipmentAssignTable() {
+            const container = document.getElementById('equipment-assign-table');
+            if (!container) return;
+            const badge = document.getElementById('eq-current-item-badge');
+            if (badge) badge.innerText = currentItem;
+
+            const processes = itemData[currentItem] || [];
+            if (!equipmentAssignData[currentItem]) equipmentAssignData[currentItem] = {};
+            const assign = equipmentAssignData[currentItem];
+
+            container.innerHTML = '';
+            if (processes.length === 0) {
+                container.innerHTML = `<div class="p-4 text-center text-xs text-slate-400">등록된 공정이 없습니다.</div>`;
+                return;
+            }
+
+            processes.forEach(p => {
+                const selectedId = assign[p.id] || '';
+                const selectedEq = findEquipment(selectedId);
+
+                let optionsHtml = `<option value="">(선택 안 함)</option>`;
+                equipmentList.forEach(eq => {
+                    const sel = String(eq.id) === String(selectedId) ? 'selected' : '';
+                    optionsHtml += `<option value="${eq.id}" ${sel}>${eq.name}</option>`;
+                });
+
+                const thumb = selectedEq && selectedEq.image_url
+                    ? `<img src="${selectedEq.image_url}" class="equip-thumb" onmouseenter="showEquipHover(event, '${selectedEq.image_url}')" onmouseleave="hideEquipHover()">`
+                    : `<div class="equip-thumb flex items-center justify-center text-slate-400"><i class="fa-solid fa-image text-[10px]"></i></div>`;
+
+                const row = document.createElement('div');
+                row.className = "flex items-center gap-2 py-2 px-2 text-xs hover:bg-slate-50";
+                row.innerHTML = `
+                    <div class="w-20 shrink-0 text-center font-bold text-blue-600">${p.id}</div>
+                    <div class="w-24 shrink-0 truncate text-slate-600" title="${p.name}">${p.name}</div>
+                    <div class="flex-1 flex items-center gap-2">
+                        ${thumb}
+                        <select onchange="updateEquipmentAssign('${p.id}', this.value)" class="flex-1 min-w-0 bg-white border border-slate-300 rounded px-1.5 py-1 text-xs focus:outline-none focus:border-blue-500">
+                            ${optionsHtml}
+                        </select>
+                    </div>
+                `;
+                container.appendChild(row);
+            });
+        }
+
+        function updateEquipmentAssign(processId, equipmentId) {
+            if (!equipmentAssignData[currentItem]) equipmentAssignData[currentItem] = {};
+            equipmentAssignData[currentItem][processId] = equipmentId;
+            renderEquipmentAssignTable();
+            saveDataAuto();
+        }
+
+        // ===================== 2번 화면: 설치 레이아웃 (설비 배치) =====================
+        function handlePoLayoutUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                if (!poData[currentItem]) poData[currentItem] = { image: "", nodes: [] };
+                poData[currentItem].image = e.target.result;
+                renderPoLayoutState();
+                saveDataAuto();
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function renderPoLayoutState() {
+            if (!poData[currentItem]) poData[currentItem] = { image: "", nodes: [] };
+            const data = poData[currentItem];
+            const placeholder = document.getElementById('po-placeholder');
+            const img = document.getElementById('po-preview-img');
+            if (!placeholder || !img) return;
+            if (data.image) {
+                placeholder.classList.add('hidden');
+                img.src = data.image;
+                img.classList.remove('hidden');
+            } else {
+                placeholder.classList.remove('hidden');
+                img.classList.add('hidden');
+                img.src = '';
+            }
+            renderPoNodes();
+        }
+
+        function dropPoNode(e) {
+            e.preventDefault();
+            const dropzone = document.getElementById('po-dropzone');
+            const rect = dropzone.getBoundingClientRect();
+            const x = ((e.clientX - rect.left) / rect.width) * 100;
+            const y = ((e.clientY - rect.top) / rect.height) * 100;
+
+            if (!poData[currentItem]) poData[currentItem] = { image: "", nodes: [] };
+            const defaultEqId = equipmentList.length > 0 ? equipmentList[0].id : '';
+            poData[currentItem].nodes.push({ x, y, equipmentId: defaultEqId });
+            renderPoNodes();
+            saveDataAuto();
+        }
+
+        function renderPoNodes() {
+            const layer = document.getElementById('po-nodes-layer');
+            if (!layer) return;
+            layer.innerHTML = '';
+            const data = poData[currentItem] || { nodes: [] };
+
+            data.nodes.forEach((node, idx) => {
+                const badge = document.createElement('div');
+                badge.className = "absolute transform -translate-x-1/2 -translate-y-1/2 cad-node-badge flex items-center rounded px-2.5 py-1.5";
+                badge.style.left = `${node.x}%`;
+                badge.style.top = `${node.y}%`;
+
+                const eq = findEquipment(node.equipmentId);
+                const defaultLabel = document.createElement('span');
+                defaultLabel.className = "cad-node-default-label text-xs font-bold text-white px-1 tracking-wide pointer-events-none";
+                defaultLabel.innerText = eq ? eq.name : "(설비 선택)";
+                badge.appendChild(defaultLabel);
+
+                const controls = document.createElement('div');
+                controls.className = "cad-node-controls absolute inset-0 bg-blue-900/95 rounded flex items-center justify-center px-1.5 space-x-1 z-10";
+
+                const select = document.createElement('select');
+                select.className = "bg-blue-800 text-white text-xs font-bold px-1.5 py-1 outline-none rounded cursor-pointer border border-blue-600";
+                let opts = `<option value="">(선택)</option>`;
+                equipmentList.forEach(e => {
+                    const sel = String(e.id) === String(node.equipmentId) ? 'selected' : '';
+                    opts += `<option value="${e.id}" ${sel}>${e.name}</option>`;
+                });
+                select.innerHTML = opts;
+                select.onchange = (e2) => {
+                    poData[currentItem].nodes[idx].equipmentId = e2.target.value;
+                    renderPoNodes();
+                    renderPurchaseTable();
+                    saveDataAuto();
+                };
+
+                const delBtn = document.createElement('button');
+                delBtn.type = "button";
+                delBtn.className = "px-1.5 py-1 text-blue-200 hover:text-rose-300 text-xs";
+                delBtn.innerHTML = '<i class="fa-solid fa-xmark"></i>';
+                delBtn.onclick = (e2) => { e2.stopPropagation(); removePoNode(idx); };
+
+                controls.appendChild(select);
+                controls.appendChild(delBtn);
+                badge.appendChild(controls);
+
+                initPoNodeDrag(badge, idx);
+                layer.appendChild(badge);
+            });
+        }
+
+        function initPoNodeDrag(badgeEl, nodeIndex) {
+            badgeEl.onmousedown = function (e) {
+                if (e.target.tagName === 'SELECT' || e.target.tagName === 'OPTION' || e.target.closest('button')) return;
+
+                let startX = e.clientX;
+                let startY = e.clientY;
+                const isCtrl = e.ctrlKey || e.metaKey;
+                let targetIdx = nodeIndex;
+
+                if (isCtrl) {
+                    const originalNode = poData[currentItem].nodes[nodeIndex];
+                    poData[currentItem].nodes.push({ ...originalNode });
+                    targetIdx = poData[currentItem].nodes.length - 1;
+                    renderPoNodes();
+                }
+
+                const dropzone = document.getElementById('po-dropzone');
+                const rect = dropzone.getBoundingClientRect();
+
+                function onMouseMove(moveEvent) {
+                    const dx = moveEvent.clientX - startX;
+                    const dy = moveEvent.clientY - startY;
+                    startX = moveEvent.clientX;
+                    startY = moveEvent.clientY;
+
+                    const currentData = poData[currentItem].nodes[targetIdx];
+                    if (!currentData) return;
+
+                    let newX = currentData.x + (dx / rect.width) * 100;
+                    let newY = currentData.y + (dy / rect.height) * 100;
+                    currentData.x = Math.max(0, Math.min(100, newX));
+                    currentData.y = Math.max(0, Math.min(100, newY));
+
+                    const nodes = dropzone.querySelectorAll('.cad-node-badge');
+                    if (nodes[targetIdx]) {
+                        nodes[targetIdx].style.left = `${currentData.x}%`;
+                        nodes[targetIdx].style.top = `${currentData.y}%`;
+                    }
+                }
+
+                function onMouseUp() {
+                    window.removeEventListener('mousemove', onMouseMove);
+                    window.removeEventListener('mouseup', onMouseUp);
+                    renderPoNodes();
+                    renderPurchaseTable();
+                    saveDataAuto();
+                }
+
+                window.addEventListener('mousemove', onMouseMove);
+                window.addEventListener('mouseup', onMouseUp);
+                e.stopPropagation();
+            };
+        }
+
+        function removePoNode(idx) {
+            poData[currentItem].nodes.splice(idx, 1);
+            renderPoNodes();
+            renderPurchaseTable();
+            saveDataAuto();
+        }
+
+        function countPoNodesByEquipment(equipmentId) {
+            if (!equipmentId) return 0;
+            const data = poData[currentItem] || { nodes: [] };
+            return (data.nodes || []).filter(n => String(n.equipmentId) === String(equipmentId)).length;
+        }
+
+        // ===================== 2번 화면: 품의 대상 설비 목록 =====================
+        function renderPurchaseTable() {
+            const container = document.getElementById('purchase-table');
+            if (!container) return;
+            const badge = document.getElementById('po-current-item-badge');
+            if (badge) badge.innerText = currentItem;
+
+            if (!poData[currentItem]) poData[currentItem] = { image: "", nodes: [] };
+            if (!poData[currentItem].rows) poData[currentItem].rows = [];
+
+            const rows = poData[currentItem].rows;
+            const processes = itemData[currentItem] || [];
+            container.innerHTML = '';
+
+            if (rows.length === 0) {
+                container.innerHTML = `<div class="p-4 text-center text-xs text-slate-400">행 추가 버튼으로 품의 대상 설비를 등록하세요.</div>`;
+                updateInvestmentTotal();
+                return;
+            }
+
+            rows.forEach((row, index) => {
+                const eq = findEquipment(row.equipmentId);
+                const unitPrice = eq ? Number(eq.unit_price || 0) : 0;
+                const qty = Number(row.qty || 0);
+                const amount = unitPrice * qty;
+                row.amount = amount;
+
+                const droppedCount = countPoNodesByEquipment(row.equipmentId);
+
+                let processOptions = `<option value="">-</option>`;
+                processes.forEach(p => {
+                    const sel = p.id === row.processId ? 'selected' : '';
+                    processOptions += `<option value="${p.id}" ${sel}>${p.id}</option>`;
+                });
+
+                let eqOptions = `<option value="">(선택)</option>`;
+                equipmentList.forEach(e => {
+                    const sel = String(e.id) === String(row.equipmentId) ? 'selected' : '';
+                    eqOptions += `<option value="${e.id}" ${sel}>${e.name}</option>`;
+                });
+
+                const thumb = eq && eq.image_url
+                    ? `<img src="${eq.image_url}" class="equip-thumb" style="width:20px;height:20px;" onmouseenter="showEquipHover(event, '${eq.image_url}')" onmouseleave="hideEquipHover()">`
+                    : '';
+
+                const rowEl = document.createElement('div');
+                rowEl.className = "flex items-center gap-1.5 py-2 px-2 text-[11px] hover:bg-slate-50";
+                rowEl.innerHTML = `
+                    <div class="w-16 shrink-0">
+                        <select onchange="updatePurchaseField(${index}, 'processId', this.value)" class="w-full bg-white border border-slate-300 rounded px-1 py-1 text-[11px] font-bold text-blue-600 focus:outline-none">
+                            ${processOptions}
+                        </select>
+                    </div>
+                    <div class="w-24 shrink-0 flex items-center gap-1">
+                        ${thumb}
+                        <select onchange="updatePurchaseField(${index}, 'equipmentId', this.value)" class="flex-1 min-w-0 bg-white border border-slate-300 rounded px-1 py-1 text-[11px] focus:outline-none">
+                            ${eqOptions}
+                        </select>
+                    </div>
+                    <div class="w-14 shrink-0">
+                        <input type="text" value="${formatNumberWithCommas(row.qty || 0)}" oninput="onNumericInput(this); updatePurchaseField(${index}, 'qty', this.value.replace(/,/g,''))" class="w-full bg-white border border-slate-300 rounded px-1 py-1 text-[11px] text-center focus:outline-none">
+                    </div>
+                    <div class="w-16 shrink-0 text-right pr-1 text-slate-500">${formatNumberWithCommas(unitPrice)}</div>
+                    <div class="flex-1 text-right pr-1 font-semibold text-slate-800">${formatNumberWithCommas(amount)}</div>
+                    <div class="w-5 shrink-0 flex flex-col items-center">
+                        <button type="button" onclick="removePurchaseRow(${index})" class="text-slate-400 hover:text-rose-600"><i class="fa-solid fa-xmark text-[10px]"></i></button>
+                        ${droppedCount > 0 ? `<button type="button" title="레이아웃에 배치된 수량(${droppedCount}개)으로 맞추기" onclick="syncPurchaseQtyFromLayout(${index})" class="text-blue-400 hover:text-blue-700 mt-0.5"><i class="fa-solid fa-rotate text-[9px]"></i></button>` : ''}
+                    </div>
+                `;
+                container.appendChild(rowEl);
+            });
+
+            updateInvestmentTotal();
+        }
+
+        function addPurchaseRow() {
+            if (!poData[currentItem]) poData[currentItem] = { image: "", nodes: [] };
+            if (!poData[currentItem].rows) poData[currentItem].rows = [];
+            const processes = itemData[currentItem] || [];
+            poData[currentItem].rows.push({
+                processId: processes.length > 0 ? processes[0].id : '',
+                equipmentId: equipmentList.length > 0 ? equipmentList[0].id : '',
+                qty: 1
+            });
+            renderPurchaseTable();
+            saveDataAuto();
+        }
+
+        function removePurchaseRow(index) {
+            poData[currentItem].rows.splice(index, 1);
+            renderPurchaseTable();
+            saveDataAuto();
+        }
+
+        function updatePurchaseField(index, field, value) {
+            poData[currentItem].rows[index][field] = field === 'qty' ? (Number(value) || 0) : value;
+            renderPurchaseTable();
+            saveDataAuto();
+        }
+
+        function syncPurchaseQtyFromLayout(index) {
+            const row = poData[currentItem].rows[index];
+            row.qty = countPoNodesByEquipment(row.equipmentId);
+            renderPurchaseTable();
+            saveDataAuto();
+        }
+
+        // ===================== 2번 화면: 설치자재 & 투자비 총계 =====================
+        function renderInstallMaterials() {
+            const container = document.getElementById('install-material-list');
+            if (!container) return;
+            if (!installMaterialData[currentItem]) installMaterialData[currentItem] = [];
+            const rows = installMaterialData[currentItem];
+            container.innerHTML = '';
+
+            if (rows.length === 0) {
+                container.innerHTML = `<div class="p-3 text-center text-[11px] text-slate-400">자재 추가 버튼으로 설치자재를 등록하세요.</div>`;
+                updateInvestmentTotal();
+                return;
+            }
+
+            rows.forEach((row, index) => {
+                const qty = Number(row.qty || 0);
+                const unitPrice = Number(row.unitPrice || 0);
+                const amount = qty * unitPrice;
+                row.amount = amount;
+
+                const rowEl = document.createElement('div');
+                rowEl.className = "flex items-center gap-2 py-1.5 px-2 text-[11px] hover:bg-slate-50";
+                rowEl.innerHTML = `
+                    <input type="text" value="${row.name || ''}" oninput="updateInstallMaterial(${index}, 'name', this.value)" class="flex-1 min-w-0 bg-white border border-slate-300 rounded px-1.5 py-1 text-[11px] focus:outline-none" placeholder="자재명">
+                    <input type="text" value="${formatNumberWithCommas(row.qty || 0)}" oninput="onNumericInput(this); updateInstallMaterial(${index}, 'qty', this.value.replace(/,/g,''))" class="w-16 bg-white border border-slate-300 rounded px-1 py-1 text-[11px] text-center focus:outline-none">
+                    <input type="text" value="${formatNumberWithCommas(row.unitPrice || 0)}" oninput="onNumericInput(this); updateInstallMaterial(${index}, 'unitPrice', this.value.replace(/,/g,''))" class="w-24 bg-white border border-slate-300 rounded px-1 py-1 text-[11px] text-right focus:outline-none">
+                    <div class="w-24 text-right font-semibold text-slate-800">${formatNumberWithCommas(amount)}</div>
+                    <button type="button" onclick="removeInstallMaterial(${index})" class="w-6 text-slate-400 hover:text-rose-600"><i class="fa-solid fa-xmark text-[10px]"></i></button>
+                `;
+                container.appendChild(rowEl);
+            });
+
+            updateInvestmentTotal();
+        }
+
+        function addInstallMaterial() {
+            if (!installMaterialData[currentItem]) installMaterialData[currentItem] = [];
+            installMaterialData[currentItem].push({ name: '', qty: 1, unitPrice: 0 });
+            renderInstallMaterials();
+            saveDataAuto();
+        }
+
+        function removeInstallMaterial(index) {
+            installMaterialData[currentItem].splice(index, 1);
+            renderInstallMaterials();
+            saveDataAuto();
+        }
+
+        function updateInstallMaterial(index, field, value) {
+            const row = installMaterialData[currentItem][index];
+            row[field] = (field === 'qty' || field === 'unitPrice') ? (Number(value) || 0) : value;
+            renderInstallMaterials();
+            saveDataAuto();
+        }
+
+        function updateInvestmentTotal() {
+            const el = document.getElementById('investment-total');
+            if (!el) return;
+            const purchaseRows = (poData[currentItem] && poData[currentItem].rows) || [];
+            const materialRows = installMaterialData[currentItem] || [];
+            const purchaseSum = purchaseRows.reduce((sum, r) => sum + Number(r.amount || 0), 0);
+            const materialSum = materialRows.reduce((sum, r) => sum + Number(r.amount || 0), 0);
+            el.innerText = formatNumberWithCommas(String(purchaseSum + materialSum)) + " 원";
         }
     </script>
 </body>
