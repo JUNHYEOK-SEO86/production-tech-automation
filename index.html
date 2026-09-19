@@ -243,25 +243,18 @@
                         <div class="flex justify-between items-center mb-3 bg-slate-100 py-2 px-3 rounded border border-slate-200">
                             <h3 class="font-bold text-slate-800 text-sm">공정별 C/T 현황</h3>
                             <div class="flex items-center space-x-2">
-                                <button onclick="addCtColumn()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-2.5 py-1 rounded text-xs font-medium transition-colors flex items-center shadow-sm">
-                                    <i class="fa-solid fa-columns mr-1"></i> C/T 항목 추가
-                                </button>
                                 <button onclick="addCtStatusRow()" class="bg-blue-600 hover:bg-blue-700 text-white px-2.5 py-1 rounded text-xs font-medium transition-colors flex items-center shadow-sm">
                                     <i class="fa-solid fa-plus mr-1"></i> 행 추가
                                 </button>
                             </div>
                         </div>
 
-                        <!-- Dynamic Header Row -->
-                        <div class="grid grid-cols-12 gap-1 bg-blue-600 text-white text-center py-2 px-2 rounded-t text-xs font-bold items-center" id="ct-table-header">
-                            <div class="col-span-3">공정 NO</div>
-                            <div class="col-span-3">공정명</div>
-                            <div class="col-span-4 grid grid-cols-3 gap-1" id="ct-col-headers">
-                                <div class="text-[11px] truncate">로딩</div>
-                                <div class="text-[11px] truncate">작업</div>
-                                <div class="text-[11px] truncate">언로딩</div>
-                            </div>
-                            <div class="col-span-2">이동/삭제</div>
+                        <!-- Header Row -->
+                        <div class="flex items-center gap-2 bg-blue-600 text-white py-2 px-2 rounded-t text-xs font-bold">
+                            <div class="w-24 shrink-0 text-center">공정 NO</div>
+                            <div class="w-28 shrink-0 text-center">공정명</div>
+                            <div class="flex-1 text-left pl-1">세부 항목 (C/T)</div>
+                            <div class="w-[92px] shrink-0 text-center">이동/삭제</div>
                         </div>
 
                         <div id="ct-status-table" class="border border-t-0 border-slate-200 rounded-b divide-y divide-slate-100 overflow-y-auto flex-1 bg-slate-50/50 mb-3"></div>
@@ -296,23 +289,27 @@
             ]
         };
 
-        let defaultCtHeaders = {
-            "세미모듈": ["로딩", "작업", "언로딩"]
-        };
+        function makeDefaultCtItems(loading, work, unload) {
+            return [
+                { label: "로딩", value: loading },
+                { label: "작업", value: work },
+                { label: "언로딩", value: unload }
+            ];
+        }
 
         let defaultCtStatusData = {
             "세미모듈": [
-                { id: "IN-PLT", cts: ["4.0", "5.5", "3.0"] },
-                { id: "A05", cts: ["2.5", "4.0", "1.5"] },
-                { id: "A10", cts: ["3.0", "9.0", "3.2"] },
-                { id: "A20", cts: ["3.1", "5.0", "2.3"] },
-                { id: "A30", cts: ["2.0", "6.0", "1.5"] },
-                { id: "A40", cts: ["3.5", "6.0", "1.5"] },
-                { id: "A50", cts: ["4.0", "8.0", "2.3"] },
-                { id: "A60", cts: ["2.0", "4.0", "1.8"] },
-                { id: "A70", cts: ["3.0", "5.0", "2.0"] },
-                { id: "A80", cts: ["1.5", "4.0", "1.0"] },
-                { id: "OUT-PLT", cts: ["3.2", "6.0", "2.0"] }
+                { id: "IN-PLT", items: makeDefaultCtItems("4.0", "5.5", "3.0") },
+                { id: "A05", items: makeDefaultCtItems("2.5", "4.0", "1.5") },
+                { id: "A10", items: makeDefaultCtItems("3.0", "9.0", "3.2") },
+                { id: "A20", items: makeDefaultCtItems("3.1", "5.0", "2.3") },
+                { id: "A30", items: makeDefaultCtItems("2.0", "6.0", "1.5") },
+                { id: "A40", items: makeDefaultCtItems("3.5", "6.0", "1.5") },
+                { id: "A50", items: makeDefaultCtItems("4.0", "8.0", "2.3") },
+                { id: "A60", items: makeDefaultCtItems("2.0", "4.0", "1.8") },
+                { id: "A70", items: makeDefaultCtItems("3.0", "5.0", "2.0") },
+                { id: "A80", items: makeDefaultCtItems("1.5", "4.0", "1.0") },
+                { id: "OUT-PLT", items: makeDefaultCtItems("3.2", "6.0", "2.0") }
             ]
         };
 
@@ -320,7 +317,6 @@
         let defaultInputs = { car: "NX5a", qty: "200,000", eff: "90", hours: "15.34", days: "240" };
 
         let itemData = {};
-        let ctHeadersData = {};
         let ctStatusData = {};
         let cadData = {};
         let inputsData = {};
@@ -364,8 +360,8 @@
             inputsData[currentItem].hours = document.getElementById('input-hours').value;
             inputsData[currentItem].days = document.getElementById('input-days').value;
 
-            const state = { itemData, ctHeadersData, ctStatusData, cadData, inputsData, itemKeys, currentItem };
-            localStorage.setItem('PE_AMS_STATE_V13', JSON.stringify(state));
+            const state = { itemData, ctStatusData, cadData, inputsData, itemKeys, currentItem };
+            localStorage.setItem('PE_AMS_STATE_V14', JSON.stringify(state));
         }
 
         function saveDataManual() {
@@ -374,14 +370,13 @@
         }
 
         function loadData() {
-            const saved = localStorage.getItem('PE_AMS_STATE_V13');
+            const saved = localStorage.getItem('PE_AMS_STATE_V14');
             if(saved) {
                 try {
                     const parsed = JSON.parse(saved);
                     if(parsed.itemData && Object.keys(parsed.itemData).length > 0) {
                         itemData = parsed.itemData;
-                        ctHeadersData = parsed.ctHeadersData || {};
-                        ctStatusData = parsed.ctStatusData || {};
+                        ctStatusData = migrateCtStatusData(parsed.ctStatusData, parsed.ctHeadersData);
                         cadData = parsed.cadData || {};
                         inputsData = parsed.inputsData || {};
                         itemKeys = parsed.itemKeys || Object.keys(itemData);
@@ -391,7 +386,6 @@
                 } catch(e) { console.error(e); }
             }
             itemData = JSON.parse(JSON.stringify(defaultItemData));
-            ctHeadersData = JSON.parse(JSON.stringify(defaultCtHeaders));
             ctStatusData = JSON.parse(JSON.stringify(defaultCtStatusData));
             cadData = JSON.parse(JSON.stringify(defaultCadData));
             inputsData = { "세미모듈": { ...defaultInputs } };
@@ -399,9 +393,30 @@
             currentItem = "세미모듈";
         }
 
+        // 구버전(공용 C/T 항목 헤더 방식) 데이터를 행별 세부 항목 방식으로 변환
+        function migrateCtStatusData(ctStatus, ctHeaders) {
+            const result = {};
+            const source = ctStatus || {};
+            Object.keys(source).forEach(key => {
+                const headers = (ctHeaders && ctHeaders[key]) || null;
+                result[key] = (source[key] || []).map(row => {
+                    if (Array.isArray(row.items)) {
+                        return { id: row.id, items: row.items };
+                    }
+                    const cts = row.cts || [];
+                    const items = cts.map((val, idx) => ({
+                        label: (headers && headers[idx]) || `항목${idx + 1}`,
+                        value: val
+                    }));
+                    return { id: row.id, items };
+                });
+            });
+            return result;
+        }
+
         function exportBackupFile() {
             saveDataAuto();
-            const state = { itemData, ctHeadersData, ctStatusData, cadData, inputsData, itemKeys, currentItem };
+            const state = { itemData, ctStatusData, cadData, inputsData, itemKeys, currentItem };
             const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(state, null, 2));
             const dlAnchor = document.createElement('a');
             dlAnchor.setAttribute("href", dataStr);
@@ -420,8 +435,7 @@
                         const parsed = JSON.parse(e.target.result);
                         if(parsed.itemData) {
                             itemData = parsed.itemData;
-                            ctHeadersData = parsed.ctHeadersData || {};
-                            ctStatusData = parsed.ctStatusData || {};
+                            ctStatusData = migrateCtStatusData(parsed.ctStatusData, parsed.ctHeadersData);
                             cadData = parsed.cadData || {};
                             inputsData = parsed.inputsData || {};
                             itemKeys = parsed.itemKeys || Object.keys(itemData);
@@ -500,7 +514,6 @@
         function deleteItemCategory(name) {
             if(confirm(`'${name}' 라인(대분류) 항목을 삭제하시겠습니까?`)) {
                 delete itemData[name];
-                delete ctHeadersData[name];
                 delete ctStatusData[name];
                 delete cadData[name];
                 delete inputsData[name];
@@ -533,8 +546,7 @@
                 if(itemData[clean]) { alert("이미 존재하는 라인명입니다."); return; }
                 saveDataAuto();
                 itemData[clean] = [{ id: "OP10", name: "신규 공정" }];
-                ctHeadersData[clean] = ["로딩", "작업", "언로딩"];
-                ctStatusData[clean] = [{ id: "OP10", cts: ["0.0", "0.0", "0.0"] }];
+                ctStatusData[clean] = [{ id: "OP10", items: makeDefaultCtItems("0.0", "0.0", "0.0") }];
                 cadData[clean] = { image: "", nodes: [] };
                 inputsData[clean] = { ...defaultInputs };
                 itemKeys.push(clean);
@@ -575,58 +587,7 @@
             renderPlacedNodes();
         }
 
-        function addCtColumn() {
-            if(!ctHeadersData[currentItem]) ctHeadersData[currentItem] = ["로딩", "작업", "언로딩"];
-            const colName = prompt("추가할 C/T 항목명을 입력하세요:", `항목 ${ctHeadersData[currentItem].length + 1}`);
-            if(colName && colName.trim()) {
-                ctHeadersData[currentItem].push(colName.trim());
-                if(!ctStatusData[currentItem]) ctStatusData[currentItem] = [];
-                ctStatusData[currentItem].forEach(row => {
-                    if(!row.cts) row.cts = [];
-                    row.cts.push("0.0");
-                });
-                renderCtStatusTable();
-                saveDataAuto();
-            }
-        }
-
-        function removeCtColumn(colIndex) {
-            if(!ctHeadersData[currentItem] || ctHeadersData[currentItem].length <= 1) {
-                alert("최소 1개 이상의 C/T 항목은 유지되어야 합니다.");
-                return;
-            }
-            if(confirm(`'${ctHeadersData[currentItem][colIndex]}' 항목을 삭제하시겠습니까?`)) {
-                ctHeadersData[currentItem].splice(colIndex, 1);
-                if(ctStatusData[currentItem]) {
-                    ctStatusData[currentItem].forEach(row => {
-                        if(row.cts) row.cts.splice(colIndex, 1);
-                    });
-                }
-                renderCtStatusTable();
-                saveDataAuto();
-            }
-        }
-
         function renderCtStatusTable() {
-            if(!ctHeadersData[currentItem]) ctHeadersData[currentItem] = ["로딩", "작업", "언로딩"];
-            const headers = ctHeadersData[currentItem];
-            const colCount = headers.length;
-
-            const headerContainer = document.getElementById('ct-table-header');
-            headerContainer.innerHTML = `
-                <div class="col-span-3">공정 NO</div>
-                <div class="col-span-3">공정명</div>
-                <div class="col-span-4 grid gap-1" id="ct-col-headers" style="grid-template-columns: repeat(${colCount}, minmax(0, 1fr));"></div>
-                <div class="col-span-2">이동/삭제</div>
-            `;
-            const headerCols = document.getElementById('ct-col-headers');
-            headers.forEach((hName, idx) => {
-                const thDiv = document.createElement('div');
-                thDiv.className = "flex items-center justify-center space-x-1 text-[11px] truncate bg-blue-700/50 px-1 rounded";
-                thDiv.innerHTML = `<span>${hName}</span><button onclick="removeCtColumn(${idx})" title="열 삭제" class="text-blue-200 hover:text-white text-[9px]"><i class="fa-solid fa-xmark"></i></button>`;
-                headerCols.appendChild(thDiv);
-            });
-
             const container = document.getElementById('ct-status-table');
             container.innerHTML = '';
 
@@ -640,8 +601,10 @@
             }
 
             ctList.forEach((ct, index) => {
+                if(!Array.isArray(ct.items)) ct.items = [];
+
                 const row = document.createElement('div');
-                row.className = "grid grid-cols-12 gap-1 items-center py-2 px-2 text-xs hover:bg-slate-100 transition-colors";
+                row.className = "flex items-center gap-2 py-2 px-2 text-xs hover:bg-slate-100 transition-colors";
 
                 const matchedProc = processes.find(p => p.id === ct.id);
                 const procName = matchedProc ? matchedProc.name : '(공정 없음)';
@@ -652,25 +615,29 @@
                     optionsHtml += `<option value="${proc.id}" ${selected}>${proc.id}</option>`;
                 });
 
-                if(!ct.cts || ct.cts.length !== colCount) {
-                    ct.cts = new Array(colCount).fill("0.0");
-                }
-
-                let inputsHtml = `<div class="col-span-4 grid gap-1" style="grid-template-columns: repeat(${colCount}, minmax(0, 1fr));">`;
-                ct.cts.forEach((val, cIdx) => {
-                    inputsHtml += `<input type="text" value="${formatNumberWithCommas(val)}" oninput="onNumericInput(this); updateCtValue(${index}, ${cIdx}, this.value);" class="w-full bg-white border border-slate-300 rounded px-1 py-1 text-xs font-semibold text-center text-slate-800 focus:outline-none focus:border-blue-500">`;
+                let itemsHtml = '';
+                ct.items.forEach((item, iIdx) => {
+                    itemsHtml += `
+                        <div class="flex items-center bg-white border border-slate-300 rounded overflow-hidden shrink-0">
+                            <input type="text" value="${item.label}" oninput="updateCtItemLabel(${index}, ${iIdx}, this.value)" class="w-12 text-[10px] text-center bg-slate-100 border-r border-slate-300 px-1 py-1 outline-none">
+                            <input type="text" value="${formatNumberWithCommas(item.value)}" oninput="onNumericInput(this); updateCtItemValue(${index}, ${iIdx}, this.value);" class="w-14 text-[10px] text-center px-1 py-1 outline-none font-semibold text-slate-800">
+                            <button type="button" onclick="removeCtItem(${index}, ${iIdx})" title="항목 삭제" class="px-1 text-slate-400 hover:text-rose-600"><i class="fa-solid fa-xmark text-[9px]"></i></button>
+                        </div>
+                    `;
                 });
-                inputsHtml += `</div>`;
 
                 row.innerHTML = `
-                    <div class="col-span-3">
+                    <div class="w-24 shrink-0">
                         <select onchange="updateCtStatusId(${index}, this.value)" class="w-full bg-white border border-slate-300 rounded px-1 py-1 text-xs font-bold text-blue-600 focus:outline-none">
                             ${optionsHtml}
                         </select>
                     </div>
-                    <div class="col-span-3 font-medium text-slate-700 truncate px-1" title="${procName}">${procName}</div>
-                    ${inputsHtml}
-                    <div class="col-span-2 flex items-center justify-center space-x-1">
+                    <div class="w-28 shrink-0 font-medium text-slate-700 truncate px-1" title="${procName}">${procName}</div>
+                    <div class="flex-1 flex flex-wrap items-center gap-1.5">
+                        ${itemsHtml}
+                        <button type="button" onclick="addCtItem(${index})" title="세부 항목 추가" class="w-6 h-6 shrink-0 flex items-center justify-center rounded-full bg-blue-600 hover:bg-blue-700 text-white text-[10px]"><i class="fa-solid fa-plus"></i></button>
+                    </div>
+                    <div class="w-[92px] shrink-0 flex items-center justify-center gap-1">
                         <button type="button" onclick="moveCtRow(${index}, -1)" class="p-1 text-slate-500 hover:bg-slate-200 rounded"><i class="fa-solid fa-chevron-up text-[10px]"></i></button>
                         <button type="button" onclick="moveCtRow(${index}, 1)" class="p-1 text-slate-500 hover:bg-slate-200 rounded"><i class="fa-solid fa-chevron-down text-[10px]"></i></button>
                         <button type="button" onclick="removeCtStatusRow(${index})" class="p-1 text-slate-400 hover:text-rose-600"><i class="fa-solid fa-xmark"></i></button>
@@ -678,6 +645,32 @@
                 `;
                 container.appendChild(row);
             });
+        }
+
+        function addCtItem(rowIndex) {
+            const row = ctStatusData[currentItem][rowIndex];
+            if(!Array.isArray(row.items)) row.items = [];
+            row.items.push({ label: `항목${row.items.length + 1}`, value: "0.0" });
+            renderCtStatusTable();
+            saveDataAuto();
+        }
+
+        function removeCtItem(rowIndex, itemIndex) {
+            const row = ctStatusData[currentItem][rowIndex];
+            row.items.splice(itemIndex, 1);
+            renderCtStatusTable();
+            saveDataAuto();
+        }
+
+        function updateCtItemLabel(rowIndex, itemIndex, value) {
+            ctStatusData[currentItem][rowIndex].items[itemIndex].label = value;
+            saveDataAuto();
+        }
+
+        function updateCtItemValue(rowIndex, itemIndex, value) {
+            const cleanVal = String(value).replace(/,/g, '');
+            ctStatusData[currentItem][rowIndex].items[itemIndex].value = cleanVal;
+            saveDataAuto();
         }
 
         function updateProcessField(index, field, value) {
@@ -693,21 +686,11 @@
             saveDataAuto();
         }
 
-        function updateCtValue(rowIndex, colIndex, val) {
-            if(!ctStatusData[currentItem][rowIndex].cts) {
-                ctStatusData[currentItem][rowIndex].cts = [];
-            }
-            let cleanVal = String(val).replace(/,/g, '');
-            ctStatusData[currentItem][rowIndex].cts[colIndex] = cleanVal;
-            saveDataAuto();
-        }
-
         function addCtStatusRow() {
             if(!ctStatusData[currentItem]) ctStatusData[currentItem] = [];
             const processes = itemData[currentItem] || [];
             const defaultId = processes.length > 0 ? processes[0].id : 'OP10';
-            const colCount = ctHeadersData[currentItem] ? ctHeadersData[currentItem].length : 3;
-            ctStatusData[currentItem].push({ id: defaultId, cts: new Array(colCount).fill("0.0") });
+            ctStatusData[currentItem].push({ id: defaultId, items: makeDefaultCtItems("0.0", "0.0", "0.0") });
             renderCtStatusTable();
             saveDataAuto();
         }
