@@ -1,0 +1,929 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PE-AMS Process Development Automation System</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome CDN for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Inter Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        /* 레이아웃 배경: 검정은색(다크 메탈릭/차콜) 느낌 */
+        .layout-dropzone {
+            background-color: #181d24;
+            background-image: radial-gradient(#2d3748 1px, transparent 1px);
+            background-size: 16px 16px;
+        }
+        /* 시인성이 뛰어난 노드 스타일 */
+        .cad-node-badge {
+            background: linear-gradient(135deg, #2563eb, #1d4ed8);
+            color: #ffffff;
+            border: 2px solid #ffffff;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+            cursor: grab;
+            user-select: none;
+        }
+        .cad-node-badge:active {
+            cursor: grabbing;
+        }
+        .cad-node-controls {
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s ease-in-out;
+        }
+        .cad-node-badge:hover .cad-node-controls {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .cad-node-default-label {
+            opacity: 1;
+            transition: opacity 0.2s ease-in-out;
+        }
+        .cad-node-badge:hover .cad-node-default-label {
+            opacity: 0;
+            display: none;
+        }
+    </style>
+</head>
+<body class="bg-[#eef2f6] text-slate-800 h-screen flex flex-col overflow-hidden">
+
+    <div class="flex flex-1 overflow-hidden">
+
+        <!-- Left Sidebar -->
+        <aside class="w-72 bg-[#111827] text-slate-300 flex flex-col shrink-0 border-r border-slate-800 z-10">
+            <div class="p-5 border-b border-slate-800 flex items-center space-x-3">
+                <div class="text-blue-500 text-xl font-bold">
+                    <i class="fa-solid fa-gears"></i>
+                </div>
+                <div>
+                    <h1 class="font-bold text-sm tracking-wide text-white">PE-AMS</h1>
+                    <p class="text-[11px] text-slate-400">생산기술 개발 업무 자동화</p>
+                </div>
+            </div>
+
+            <nav class="flex-1 px-3 py-4 space-y-2 overflow-y-auto text-sm">
+                <div class="text-xs font-semibold text-slate-400 px-3 py-1">1. 개발착수 (공법검토)</div>
+                <div class="pl-2 space-y-1">
+                    <a href="#" class="flex items-center px-3 py-2 rounded-lg bg-blue-600 text-white font-medium shadow-sm">
+                        <i class="fa-solid fa-angles-right w-4 mr-2 text-xs"></i> 1-1. 목표 C/T & 공정 수립
+                    </a>
+                    <a href="#" class="flex items-center px-3 py-2 rounded-lg text-slate-400 hover:bg-slate-800 hover:text-slate-200 transition-colors">
+                        <i class="fa-solid fa-circle w-2 h-2 rounded-full bg-slate-600 mr-3 ml-1"></i> 1-2. 설비 공법 검토
+                    </a>
+                </div>
+
+                <div class="pt-4 text-xs font-semibold text-slate-500 px-3 py-1">다음 단계</div>
+                <div class="space-y-1">
+                    <a href="#" class="flex items-center px-3 py-2 rounded-lg text-slate-400 hover:bg-slate-800 hover:text-slate-200 transition-colors">
+                        <i class="fa-solid fa-cart-shopping w-5 mr-2 text-center text-slate-500"></i> 2. 품의 / 발주
+                    </a>
+                    <a href="#" class="flex items-center px-3 py-2 rounded-lg text-slate-400 hover:bg-slate-800 hover:text-slate-200 transition-colors">
+                        <i class="fa-solid fa-screwdriver-wrench w-5 mr-2 text-center text-slate-500"></i> 3. 설치 / 품힉 (T/O)
+                    </a>
+                    <a href="#" class="flex items-center px-3 py-2 rounded-lg text-slate-400 hover:bg-slate-800 hover:text-slate-200 transition-colors">
+                        <i class="fa-solid fa-truck-fast w-5 mr-2 text-center text-slate-500"></i> 4. 운송 & HTS 코드
+                    </a>
+                    <a href="#" class="flex items-center px-3 py-2 rounded-lg text-slate-400 hover:bg-slate-800 hover:text-slate-200 transition-colors">
+                        <i class="fa-solid fa-clipboard-check w-5 mr-2 text-center text-slate-500"></i> 5. 완료보고 & 집계
+                    </a>
+                </div>
+            </nav>
+
+            <div class="p-4 border-t border-slate-800 text-xs text-emerald-400 font-medium">
+                DB 보안 모드: 관리자 승인 필수
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="flex-1 bg-[#eef2f6] overflow-y-auto p-6 flex flex-col space-y-6">
+
+            <!-- Top Header & Dynamic Line/Item Tabs Bar -->
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 px-5 py-4 flex flex-col md:flex-row justify-between items-center gap-4">
+                <div class="flex items-center space-x-3 w-full md:w-auto">
+                    <div class="bg-blue-600 text-white p-2 rounded-lg shadow-sm">
+                        <i class="fa-solid fa-layer-group text-sm"></i>
+                    </div>
+                    <div>
+                        <h2 class="font-bold text-slate-800 text-sm">라인명 / ITEM 대분류 선택</h2>
+                        <p class="text-[11px] text-slate-500">버튼 위치 변경(좌/우 이동) 및 새 화면 추가 가능</p>
+                    </div>
+                </div>
+
+                <!-- Dynamic Line Tabs Container -->
+                <div class="flex items-center space-x-2 overflow-x-auto w-full md:w-auto pb-1 md:pb-0" id="item-tabs-container"></div>
+
+                <div class="flex items-center space-x-2 shrink-0">
+                    <button onclick="addNewItemScreen()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3.5 py-2 rounded-lg text-xs font-semibold transition-colors flex items-center shadow-sm">
+                        <i class="fa-solid fa-plus mr-1.5"></i> 새 화면 추가
+                    </button>
+                    <button onclick="saveDataManual()" class="bg-blue-600 hover:bg-blue-700 text-white px-3.5 py-2 rounded-lg text-xs font-semibold transition-colors flex items-center shadow-sm">
+                        <i class="fa-solid fa-floppy-disk mr-1.5"></i> 데이터 저장
+                    </button>
+                    <button onclick="exportBackupFile()" class="bg-slate-700 hover:bg-slate-800 text-white px-3 py-2 rounded-lg text-xs font-semibold transition-colors flex items-center shadow-sm">
+                        <i class="fa-solid fa-download mr-1.5"></i> 백업
+                    </button>
+                    <label class="cursor-pointer bg-slate-200 hover:bg-slate-300 text-slate-700 px-3 py-2 rounded-lg text-xs font-semibold transition-colors flex items-center shadow-sm">
+                        <i class="fa-solid fa-upload mr-1.5"></i> 불러오기
+                        <input type="file" accept=".json" class="hidden" onchange="importBackupFile(event)">
+                    </label>
+                </div>
+            </div>
+
+            <!-- Main Layout Split Grid -->
+            <div class="flex-1 grid grid-cols-12 gap-6 overflow-hidden">
+
+                <!-- Left Column (Span 7): Top Input Bar & Bottom Large CAD Layout -->
+                <div class="col-span-7 flex flex-col space-y-6 overflow-y-auto pr-1">
+
+                    <!-- Info Input Card -->
+                    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="flex items-center space-x-2">
+                                <i class="fa-solid fa-file-lines text-blue-600"></i>
+                                <h3 class="font-bold text-slate-800 text-sm">정보 기입 (웹 입력) - <span id="current-item-title-badge" class="text-blue-600">세미모듈</span></h3>
+                            </div>
+                            <button onclick="deleteCurrentItemScreen()" class="text-slate-400 hover:text-rose-600 text-xs flex items-center transition-colors">
+                                <i class="fa-solid fa-trash-can mr-1"></i> 현재 화면 삭제
+                            </button>
+                        </div>
+                        <div class="grid grid-cols-6 gap-3">
+                            <div>
+                                <label class="block text-[11px] font-medium text-slate-500 mb-1">차종명</label>
+                                <input type="text" id="input-car" value="NX5a" oninput="saveDataAuto()" class="w-full bg-slate-50 border border-slate-300 rounded px-2.5 py-1.5 text-xs text-slate-800 focus:outline-none focus:border-blue-500">
+                            </div>
+                            <div>
+                                <label class="block text-[11px] font-medium text-slate-500 mb-1">생산대수 (대)</label>
+                                <input type="text" id="input-qty" value="200,000" oninput="onNumericInput(this); saveDataAuto();" class="w-full bg-slate-50 border border-slate-300 rounded px-2.5 py-1.5 text-xs text-slate-800 focus:outline-none focus:border-blue-500">
+                            </div>
+                            <div>
+                                <label class="block text-[11px] font-medium text-slate-500 mb-1">라인효율 (%)</label>
+                                <input type="text" id="input-eff" value="90" oninput="onNumericInput(this); saveDataAuto();" class="w-full bg-slate-50 border border-slate-300 rounded px-2.5 py-1.5 text-xs text-slate-800 focus:outline-none focus:border-blue-500">
+                            </div>
+                            <div>
+                                <label class="block text-[11px] font-medium text-slate-500 mb-1">일근무 (HR)</label>
+                                <input type="text" id="input-hours" value="15.34" oninput="onNumericInput(this); saveDataAuto();" class="w-full bg-slate-50 border border-slate-300 rounded px-2.5 py-1.5 text-xs text-slate-800 focus:outline-none focus:border-blue-500">
+                            </div>
+                            <div>
+                                <label class="block text-[11px] font-medium text-slate-500 mb-1">연근무 (일)</label>
+                                <input type="text" id="input-days" value="240" oninput="onNumericInput(this); saveDataAuto();" class="w-full bg-slate-50 border border-slate-300 rounded px-2.5 py-1.5 text-xs text-slate-800 focus:outline-none focus:border-blue-500">
+                            </div>
+                            <div>
+                                <label class="block text-[11px] font-medium text-blue-600 mb-1">목표 C/T (초/대)</label>
+                                <input type="text" id="input-target-ct" value="59.6" readonly class="w-full bg-blue-50 border border-blue-200 rounded px-2.5 py-1.5 text-xs font-bold text-blue-700 text-center">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Large CAD Layout Box with Dark Metallic/Charcoal Background -->
+                    <div class="bg-[#1f293d] rounded-xl shadow-md overflow-hidden flex flex-col flex-1 min-h-[380px] border border-slate-700">
+                        <div class="bg-[#111827] text-white px-4 py-3 flex justify-between items-center shadow-inner border-b border-slate-800">
+                            <h3 class="font-bold text-sm tracking-wide flex items-center"><i class="fa-solid fa-map text-blue-400 mr-2"></i> 공정 레이아웃</h3>
+                            <div class="flex space-x-2 items-center">
+                                <button class="bg-slate-700 hover:bg-slate-600 text-white px-3 py-1 rounded text-xs font-medium shadow cursor-grab active:cursor-grabbing border border-slate-600" draggable="true" ondragstart="handlePaletteDragStart(event, 'OP-DRAG')">
+                                    <i class="fa-solid fa-arrows-up-down-left-right mr-1"></i> 공정 NO
+                                </button>
+                                <label class="cursor-pointer bg-blue-600 hover:bg-blue-500 text-white px-3 py-1 rounded text-xs font-medium shadow flex items-center">
+                                    <i class="fa-solid fa-upload mr-1"></i> 이미지 업로드
+                                    <input type="file" accept="image/*" class="hidden" onchange="handleCadUpload(event)">
+                                </label>
+                            </div>
+                        </div>
+
+                        <div id="cad-dropzone" class="flex-1 layout-dropzone relative flex flex-col items-center justify-center p-4 overflow-hidden" ondragover="allowDrop(event)" ondrop="dropProcessNode(event)">
+                            <div id="cad-placeholder" class="text-center text-slate-400">
+                                <div class="text-xs font-medium text-slate-500 mb-1">드래그 가능</div>
+                                <div class="text-xl font-bold tracking-wider text-slate-300">레이아웃 업로드</div>
+                            </div>
+                            <img id="cad-preview-img" src="" alt="CAD Layout" class="absolute inset-0 w-full h-full object-contain pointer-events-none">
+                            <div id="cad-nodes-layer" class="absolute inset-0"></div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Right Column (Span 5): Top ITEM & Process Table, Bottom C/T Status -->
+                <div class="col-span-5 flex flex-col space-y-6 overflow-y-auto pr-1">
+
+                    <!-- Process Table Card -->
+                    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5 flex flex-col h-[320px]">
+                        <div class="flex justify-between items-center mb-3">
+                            <div class="flex items-center space-x-2">
+                                <i class="fa-solid fa-list-check text-blue-600"></i>
+                                <h3 class="font-bold text-slate-800 text-sm">ITEM 및 공정 구성</h3>
+                            </div>
+                            <button onclick="addProcessRow(-1)" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded text-xs font-medium transition-colors flex items-center shadow-sm">
+                                <i class="fa-solid fa-plus mr-1"></i> 공정 추가
+                            </button>
+                        </div>
+
+                        <div class="flex-1 overflow-y-auto border border-slate-200 rounded-lg">
+                            <table class="w-full text-left border-collapse text-xs">
+                                <thead class="bg-slate-100 text-slate-700 sticky top-0 border-b border-slate-200">
+                                    <tr>
+                                        <th class="py-2.5 px-3 font-semibold w-1/4 text-center">공정 NO</th>
+                                        <th class="py-2.5 px-3 font-semibold">공정명</th>
+                                        <th class="py-2.5 px-3 font-semibold w-28 text-center">삽입 / 이동 / 삭제</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="process-table-body" class="divide-y divide-slate-100"></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Process C/T Status Box with 3+ Sub-columns & Add Column button -->
+                    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5 flex-1 flex flex-col min-h-[300px]">
+                        <div class="flex justify-between items-center mb-3 bg-slate-100 py-2 px-3 rounded border border-slate-200">
+                            <h3 class="font-bold text-slate-800 text-sm">공정별 C/T 현황</h3>
+                            <div class="flex items-center space-x-2">
+                                <button onclick="addCtColumn()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-2.5 py-1 rounded text-xs font-medium transition-colors flex items-center shadow-sm">
+                                    <i class="fa-solid fa-columns mr-1"></i> C/T 항목 추가
+                                </button>
+                                <button onclick="addCtStatusRow()" class="bg-blue-600 hover:bg-blue-700 text-white px-2.5 py-1 rounded text-xs font-medium transition-colors flex items-center shadow-sm">
+                                    <i class="fa-solid fa-plus mr-1"></i> 행 추가
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Dynamic Header Row -->
+                        <div class="grid grid-cols-12 gap-1 bg-blue-600 text-white text-center py-2 px-2 rounded-t text-xs font-bold items-center" id="ct-table-header">
+                            <div class="col-span-3">공정 NO</div>
+                            <div class="col-span-3">공정명</div>
+                            <div class="col-span-4 grid grid-cols-3 gap-1" id="ct-col-headers">
+                                <div class="text-[11px] truncate">로딩</div>
+                                <div class="text-[11px] truncate">작업</div>
+                                <div class="text-[11px] truncate">언로딩</div>
+                            </div>
+                            <div class="col-span-2">이동/삭제</div>
+                        </div>
+
+                        <div id="ct-status-table" class="border border-t-0 border-slate-200 rounded-b divide-y divide-slate-100 overflow-y-auto flex-1 bg-slate-50/50 mb-3"></div>
+
+                        <div class="bg-slate-50 p-2.5 rounded-lg border border-slate-200 text-[11px] text-slate-600">
+                            <p>• 레이아웃 공정 박스를 <strong>마우스로 언제든지 자유롭게 드래그</strong>하여 위치를 이동할 수 있으며, <strong>Ctrl + 드래그</strong> 시 복사됩니다.</p>
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </main>
+    </div>
+
+    <!-- JavaScript Application Logic -->
+    <script>
+        let defaultItemData = {
+            "세미모듈": [
+                { id: "IN-PLT", name: "제품 자동 취출" },
+                { id: "A05", name: "제품 센터링" },
+                { id: "A10", name: "자동 리탭핑" },
+                { id: "A20", name: "FR/RR BODY MT'G BUSH 압입" },
+                { id: "A30", name: "LWR STOPPER 압입" },
+                { id: "A40", name: "FR L/ARM 가체결" },
+                { id: "A50", name: "FR L/ARM 본체결" },
+                { id: "A60", name: "DIM'S 전수검사" },
+                { id: "A70", name: "UNLOAD'G" },
+                { id: "A80", name: "작업자 검사" },
+                { id: "OUT-PLT", name: "PLT 적재" }
+            ]
+        };
+
+        let defaultCtHeaders = {
+            "세미모듈": ["로딩", "작업", "언로딩"]
+        };
+
+        let defaultCtStatusData = {
+            "세미모듈": [
+                { id: "IN-PLT", cts: ["4.0", "5.5", "3.0"] },
+                { id: "A05", cts: ["2.5", "4.0", "1.5"] },
+                { id: "A10", cts: ["3.0", "9.0", "3.2"] },
+                { id: "A20", cts: ["3.1", "5.0", "2.3"] },
+                { id: "A30", cts: ["2.0", "6.0", "1.5"] },
+                { id: "A40", cts: ["3.5", "6.0", "1.5"] },
+                { id: "A50", cts: ["4.0", "8.0", "2.3"] },
+                { id: "A60", cts: ["2.0", "4.0", "1.8"] },
+                { id: "A70", cts: ["3.0", "5.0", "2.0"] },
+                { id: "A80", cts: ["1.5", "4.0", "1.0"] },
+                { id: "OUT-PLT", cts: ["3.2", "6.0", "2.0"] }
+            ]
+        };
+
+        let defaultCadData = { "세미모듈": { image: "", nodes: [] } };
+        let defaultInputs = { car: "NX5a", qty: "200,000", eff: "90", hours: "15.34", days: "240" };
+
+        let itemData = {};
+        let ctHeadersData = {};
+        let ctStatusData = {};
+        let cadData = {};
+        let inputsData = {};
+        let itemKeys = [];
+        let currentItem = "세미모듈";
+
+        // 천단위 콤마 포맷 유틸리티
+        function formatNumberWithCommas(value) {
+            if (value === null || value === undefined) return "";
+            let cleanVal = String(value).replace(/[^0-9.-]/g, "");
+            let parts = cleanVal.split('.');
+            parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+            return parts.join('.');
+        }
+
+        function onNumericInput(inputEl) {
+            let cursorPosition = inputEl.selectionStart;
+            let originalLength = inputEl.value.length;
+
+            let formatted = formatNumberWithCommas(inputEl.value);
+            inputEl.value = formatted;
+
+            let newLength = inputEl.value.length;
+            let diff = newLength - originalLength;
+            try {
+                inputEl.setSelectionRange(cursorPosition + diff, cursorPosition + diff);
+            } catch(e) {}
+        }
+
+        window.onload = function() {
+            loadData();
+            renderItemTabs();
+            renderAll();
+        };
+
+        function saveDataAuto() {
+            if(!inputsData[currentItem]) inputsData[currentItem] = {};
+            inputsData[currentItem].car = document.getElementById('input-car').value;
+            inputsData[currentItem].qty = document.getElementById('input-qty').value;
+            inputsData[currentItem].eff = document.getElementById('input-eff').value;
+            inputsData[currentItem].hours = document.getElementById('input-hours').value;
+            inputsData[currentItem].days = document.getElementById('input-days').value;
+
+            const state = { itemData, ctHeadersData, ctStatusData, cadData, inputsData, itemKeys, currentItem };
+            localStorage.setItem('PE_AMS_STATE_V13', JSON.stringify(state));
+        }
+
+        function saveDataManual() {
+            saveDataAuto();
+            alert("데이터가 브라우저 저장소에 안전하게 저장되었습니다.");
+        }
+
+        function loadData() {
+            const saved = localStorage.getItem('PE_AMS_STATE_V13');
+            if(saved) {
+                try {
+                    const parsed = JSON.parse(saved);
+                    if(parsed.itemData && Object.keys(parsed.itemData).length > 0) {
+                        itemData = parsed.itemData;
+                        ctHeadersData = parsed.ctHeadersData || {};
+                        ctStatusData = parsed.ctStatusData || {};
+                        cadData = parsed.cadData || {};
+                        inputsData = parsed.inputsData || {};
+                        itemKeys = parsed.itemKeys || Object.keys(itemData);
+                        currentItem = parsed.currentItem || itemKeys[0];
+                        return;
+                    }
+                } catch(e) { console.error(e); }
+            }
+            itemData = JSON.parse(JSON.stringify(defaultItemData));
+            ctHeadersData = JSON.parse(JSON.stringify(defaultCtHeaders));
+            ctStatusData = JSON.parse(JSON.stringify(defaultCtStatusData));
+            cadData = JSON.parse(JSON.stringify(defaultCadData));
+            inputsData = { "세미모듈": { ...defaultInputs } };
+            itemKeys = Object.keys(itemData);
+            currentItem = "세미모듈";
+        }
+
+        function exportBackupFile() {
+            saveDataAuto();
+            const state = { itemData, ctHeadersData, ctStatusData, cadData, inputsData, itemKeys, currentItem };
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(state, null, 2));
+            const dlAnchor = document.createElement('a');
+            dlAnchor.setAttribute("href", dataStr);
+            dlAnchor.setAttribute("download", `PE_AMS_Backup_${new Date().toISOString().slice(0,10)}.json`);
+            document.body.appendChild(dlAnchor);
+            dlAnchor.click();
+            dlAnchor.remove();
+        }
+
+        function importBackupFile(event) {
+            const file = event.target.files[0];
+            if(file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        const parsed = JSON.parse(e.target.result);
+                        if(parsed.itemData) {
+                            itemData = parsed.itemData;
+                            ctHeadersData = parsed.ctHeadersData || {};
+                            ctStatusData = parsed.ctStatusData || {};
+                            cadData = parsed.cadData || {};
+                            inputsData = parsed.inputsData || {};
+                            itemKeys = parsed.itemKeys || Object.keys(itemData);
+                            currentItem = itemKeys[0] || "세미모듈";
+                            saveDataAuto();
+                            renderItemTabs();
+                            renderAll();
+                            alert("백업 파일 복원이 완료되었습니다.");
+                        }
+                    } catch(err) { alert("파일 로드 중 오류가 발생했습니다."); }
+                };
+                reader.readAsText(file);
+            }
+        }
+
+        function renderItemTabs() {
+            const container = document.getElementById('item-tabs-container');
+            container.innerHTML = '';
+
+            itemKeys.forEach((itemName, index) => {
+                const isActive = itemName === currentItem;
+                const tabDiv = document.createElement('div');
+                tabDiv.className = `flex items-center space-x-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all shadow-sm cursor-pointer ${
+                    isActive ? 'bg-blue-600 text-white ring-2 ring-blue-400' : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
+                }`;
+                tabDiv.onclick = () => {
+                    saveDataAuto();
+                    currentItem = itemName;
+                    renderItemTabs();
+                    renderAll();
+                };
+
+                tabDiv.innerHTML = `<span class="flex items-center"><i class="fa-solid fa-cube mr-1.5 opacity-75"></i> ${itemName}</span>`;
+
+                const controls = document.createElement('div');
+                controls.className = `flex items-center space-x-1 ml-1.5 pl-1.5 border-l ${isActive ? 'border-blue-400' : 'border-slate-300'}`;
+
+                if(index > 0) {
+                    const lBtn = document.createElement('button');
+                    lBtn.innerHTML = `<i class="fa-solid fa-chevron-left text-[10px]"></i>`;
+                    lBtn.className = `p-1 rounded hover:bg-black/20 ${isActive ? 'text-white' : 'text-slate-500'}`;
+                    lBtn.title = "왼쪽으로 이동";
+                    lBtn.onclick = (e) => { e.stopPropagation(); moveItemKey(index, index - 1); };
+                    controls.appendChild(lBtn);
+                }
+                if(index < itemKeys.length - 1) {
+                    const rBtn = document.createElement('button');
+                    rBtn.innerHTML = `<i class="fa-solid fa-chevron-right text-[10px]"></i>`;
+                    rBtn.className = `p-1 rounded hover:bg-black/20 ${isActive ? 'text-white' : 'text-slate-500'}`;
+                    rBtn.title = "오른쪽으로 이동";
+                    rBtn.onclick = (e) => { e.stopPropagation(); moveItemKey(index, index + 1); };
+                    controls.appendChild(rBtn);
+                }
+                if(itemKeys.length > 1) {
+                    const dBtn = document.createElement('button');
+                    dBtn.innerHTML = `<i class="fa-solid fa-xmark text-[11px]"></i>`;
+                    dBtn.className = `p-1 rounded hover:bg-rose-500 hover:text-white ${isActive ? 'text-blue-200' : 'text-slate-400'}`;
+                    dBtn.title = "삭제";
+                    dBtn.onclick = (e) => { e.stopPropagation(); deleteItemCategory(itemName); };
+                    controls.appendChild(dBtn);
+                }
+
+                tabDiv.appendChild(controls);
+                container.appendChild(tabDiv);
+            });
+        }
+
+        function moveItemKey(from, to) {
+            saveDataAuto();
+            const item = itemKeys.splice(from, 1)[0];
+            itemKeys.splice(to, 0, item);
+            renderItemTabs();
+            saveDataAuto();
+        }
+
+        function deleteItemCategory(name) {
+            if(confirm(`'${name}' 라인(대분류) 항목을 삭제하시겠습니까?`)) {
+                delete itemData[name];
+                delete ctHeadersData[name];
+                delete ctStatusData[name];
+                delete cadData[name];
+                delete inputsData[name];
+                itemKeys = itemKeys.filter(k => k !== name);
+                currentItem = itemKeys[0];
+                renderItemTabs();
+                renderAll();
+                saveDataAuto();
+            }
+        }
+
+        function renderAll() {
+            document.getElementById('current-item-title-badge').innerText = currentItem;
+            const inp = inputsData[currentItem] || defaultInputs;
+            document.getElementById('input-car').value = inp.car || "NX5a";
+            document.getElementById('input-qty').value = formatNumberWithCommas(inp.qty || "200,000");
+            document.getElementById('input-eff').value = formatNumberWithCommas(inp.eff || "90");
+            document.getElementById('input-hours').value = formatNumberWithCommas(inp.hours || "15.34");
+            document.getElementById('input-days').value = formatNumberWithCommas(inp.days || "240");
+
+            renderProcessTable();
+            renderCtStatusTable();
+            renderCadState();
+        }
+
+        function addNewItemScreen() {
+            const name = prompt("새로운 라인명(대분류)을 입력하세요:", `라인 ${itemKeys.length + 1}`);
+            if(name && name.trim()) {
+                const clean = name.trim();
+                if(itemData[clean]) { alert("이미 존재하는 라인명입니다."); return; }
+                saveDataAuto();
+                itemData[clean] = [{ id: "OP10", name: "신규 공정" }];
+                ctHeadersData[clean] = ["로딩", "작업", "언로딩"];
+                ctStatusData[clean] = [{ id: "OP10", cts: ["0.0", "0.0", "0.0"] }];
+                cadData[clean] = { image: "", nodes: [] };
+                inputsData[clean] = { ...defaultInputs };
+                itemKeys.push(clean);
+                currentItem = clean;
+                renderItemTabs();
+                renderAll();
+                saveDataAuto();
+            }
+        }
+
+        function deleteCurrentItemScreen() { deleteItemCategory(currentItem); }
+
+        function renderProcessTable() {
+            const tbody = document.getElementById('process-table-body');
+            tbody.innerHTML = '';
+            const processes = itemData[currentItem] || [];
+
+            processes.forEach((p, index) => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-50 transition-colors";
+                tr.innerHTML = `
+                    <td class="py-2 px-3 text-center font-bold text-blue-600">
+                        <input type="text" value="${p.id}" oninput="updateProcessField(${index}, 'id', this.value)" class="w-20 text-center bg-slate-50 border border-slate-200 rounded px-1 py-0.5 text-xs font-bold text-blue-600 focus:outline-none focus:border-blue-500">
+                    </td>
+                    <td class="py-2 px-3">
+                        <input type="text" value="${p.name}" oninput="updateProcessField(${index}, 'name', this.value)" class="w-full bg-slate-50 border border-slate-200 rounded px-2 py-0.5 text-xs text-slate-800 focus:outline-none focus:border-blue-500">
+                    </td>
+                    <td class="py-2 px-3 text-center flex items-center justify-center space-x-1">
+                        <button type="button" onclick="moveProcessRow(${index}, -1)" title="위로" class="bg-slate-100 hover:bg-slate-300 text-slate-600 px-1 py-0.5 rounded text-[10px]"><i class="fa-solid fa-chevron-up"></i></button>
+                        <button type="button" onclick="moveProcessRow(${index}, 1)" title="아래로" class="bg-slate-100 hover:bg-slate-300 text-slate-600 px-1 py-0.5 rounded text-[10px]"><i class="fa-solid fa-chevron-down"></i></button>
+                        <button type="button" onclick="addProcessRow(${index})" title="바로 아래 공정 추가" class="bg-blue-100 hover:bg-blue-600 hover:text-white text-blue-600 px-1.5 py-0.5 rounded text-[10px]"><i class="fa-solid fa-plus"></i></button>
+                        <button type="button" onclick="removeProcessRow(${index})" title="삭제" class="bg-slate-100 hover:bg-rose-600 hover:text-white text-slate-500 px-1.5 py-0.5 rounded text-[10px]"><i class="fa-solid fa-xmark"></i></button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+            renderCtStatusTable();
+            renderPlacedNodes();
+        }
+
+        function addCtColumn() {
+            if(!ctHeadersData[currentItem]) ctHeadersData[currentItem] = ["로딩", "작업", "언로딩"];
+            const colName = prompt("추가할 C/T 항목명을 입력하세요:", `항목 ${ctHeadersData[currentItem].length + 1}`);
+            if(colName && colName.trim()) {
+                ctHeadersData[currentItem].push(colName.trim());
+                if(!ctStatusData[currentItem]) ctStatusData[currentItem] = [];
+                ctStatusData[currentItem].forEach(row => {
+                    if(!row.cts) row.cts = [];
+                    row.cts.push("0.0");
+                });
+                renderCtStatusTable();
+                saveDataAuto();
+            }
+        }
+
+        function removeCtColumn(colIndex) {
+            if(!ctHeadersData[currentItem] || ctHeadersData[currentItem].length <= 1) {
+                alert("최소 1개 이상의 C/T 항목은 유지되어야 합니다.");
+                return;
+            }
+            if(confirm(`'${ctHeadersData[currentItem][colIndex]}' 항목을 삭제하시겠습니까?`)) {
+                ctHeadersData[currentItem].splice(colIndex, 1);
+                if(ctStatusData[currentItem]) {
+                    ctStatusData[currentItem].forEach(row => {
+                        if(row.cts) row.cts.splice(colIndex, 1);
+                    });
+                }
+                renderCtStatusTable();
+                saveDataAuto();
+            }
+        }
+
+        function renderCtStatusTable() {
+            if(!ctHeadersData[currentItem]) ctHeadersData[currentItem] = ["로딩", "작업", "언로딩"];
+            const headers = ctHeadersData[currentItem];
+            const colCount = headers.length;
+
+            const headerContainer = document.getElementById('ct-table-header');
+            headerContainer.innerHTML = `
+                <div class="col-span-3">공정 NO</div>
+                <div class="col-span-3">공정명</div>
+                <div class="col-span-4 grid gap-1" id="ct-col-headers" style="grid-template-columns: repeat(${colCount}, minmax(0, 1fr));"></div>
+                <div class="col-span-2">이동/삭제</div>
+            `;
+            const headerCols = document.getElementById('ct-col-headers');
+            headers.forEach((hName, idx) => {
+                const thDiv = document.createElement('div');
+                thDiv.className = "flex items-center justify-center space-x-1 text-[11px] truncate bg-blue-700/50 px-1 rounded";
+                thDiv.innerHTML = `<span>${hName}</span><button onclick="removeCtColumn(${idx})" title="열 삭제" class="text-blue-200 hover:text-white text-[9px]"><i class="fa-solid fa-xmark"></i></button>`;
+                headerCols.appendChild(thDiv);
+            });
+
+            const container = document.getElementById('ct-status-table');
+            container.innerHTML = '';
+
+            if(!ctStatusData[currentItem]) ctStatusData[currentItem] = [];
+            const ctList = ctStatusData[currentItem];
+            const processes = itemData[currentItem] || [];
+
+            if(ctList.length === 0) {
+                container.innerHTML = `<div class="p-4 text-center text-xs text-slate-400">등록된 항목이 없습니다.</div>`;
+                return;
+            }
+
+            ctList.forEach((ct, index) => {
+                const row = document.createElement('div');
+                row.className = "grid grid-cols-12 gap-1 items-center py-2 px-2 text-xs hover:bg-slate-100 transition-colors";
+
+                const matchedProc = processes.find(p => p.id === ct.id);
+                const procName = matchedProc ? matchedProc.name : '(공정 없음)';
+
+                let optionsHtml = '';
+                processes.forEach(proc => {
+                    const selected = proc.id === ct.id ? 'selected' : '';
+                    optionsHtml += `<option value="${proc.id}" ${selected}>${proc.id}</option>`;
+                });
+
+                if(!ct.cts || ct.cts.length !== colCount) {
+                    ct.cts = new Array(colCount).fill("0.0");
+                }
+
+                let inputsHtml = `<div class="col-span-4 grid gap-1" style="grid-template-columns: repeat(${colCount}, minmax(0, 1fr));">`;
+                ct.cts.forEach((val, cIdx) => {
+                    inputsHtml += `<input type="text" value="${formatNumberWithCommas(val)}" oninput="onNumericInput(this); updateCtValue(${index}, ${cIdx}, this.value);" class="w-full bg-white border border-slate-300 rounded px-1 py-1 text-xs font-semibold text-center text-slate-800 focus:outline-none focus:border-blue-500">`;
+                });
+                inputsHtml += `</div>`;
+
+                row.innerHTML = `
+                    <div class="col-span-3">
+                        <select onchange="updateCtStatusId(${index}, this.value)" class="w-full bg-white border border-slate-300 rounded px-1 py-1 text-xs font-bold text-blue-600 focus:outline-none">
+                            ${optionsHtml}
+                        </select>
+                    </div>
+                    <div class="col-span-3 font-medium text-slate-700 truncate px-1" title="${procName}">${procName}</div>
+                    ${inputsHtml}
+                    <div class="col-span-2 flex items-center justify-center space-x-1">
+                        <button type="button" onclick="moveCtRow(${index}, -1)" class="p-1 text-slate-500 hover:bg-slate-200 rounded"><i class="fa-solid fa-chevron-up text-[10px]"></i></button>
+                        <button type="button" onclick="moveCtRow(${index}, 1)" class="p-1 text-slate-500 hover:bg-slate-200 rounded"><i class="fa-solid fa-chevron-down text-[10px]"></i></button>
+                        <button type="button" onclick="removeCtStatusRow(${index})" class="p-1 text-slate-400 hover:text-rose-600"><i class="fa-solid fa-xmark"></i></button>
+                    </div>
+                `;
+                container.appendChild(row);
+            });
+        }
+
+        function updateProcessField(index, field, value) {
+            itemData[currentItem][index][field] = value;
+            renderCtStatusTable();
+            renderPlacedNodes();
+            saveDataAuto();
+        }
+
+        function updateCtStatusId(index, id) {
+            ctStatusData[currentItem][index].id = id;
+            renderCtStatusTable();
+            saveDataAuto();
+        }
+
+        function updateCtValue(rowIndex, colIndex, val) {
+            if(!ctStatusData[currentItem][rowIndex].cts) {
+                ctStatusData[currentItem][rowIndex].cts = [];
+            }
+            let cleanVal = String(val).replace(/,/g, '');
+            ctStatusData[currentItem][rowIndex].cts[colIndex] = cleanVal;
+            saveDataAuto();
+        }
+
+        function addCtStatusRow() {
+            if(!ctStatusData[currentItem]) ctStatusData[currentItem] = [];
+            const processes = itemData[currentItem] || [];
+            const defaultId = processes.length > 0 ? processes[0].id : 'OP10';
+            const colCount = ctHeadersData[currentItem] ? ctHeadersData[currentItem].length : 3;
+            ctStatusData[currentItem].push({ id: defaultId, cts: new Array(colCount).fill("0.0") });
+            renderCtStatusTable();
+            saveDataAuto();
+        }
+
+        function removeCtStatusRow(index) {
+            ctStatusData[currentItem].splice(index, 1);
+            renderCtStatusTable();
+            saveDataAuto();
+        }
+
+        function moveCtRow(index, direction) {
+            const list = ctStatusData[currentItem];
+            const target = index + direction;
+            if(target < 0 || target >= list.length) return;
+            const temp = list[index];
+            list[index] = list[target];
+            list[target] = temp;
+            renderCtStatusTable();
+            saveDataAuto();
+        }
+
+        function addProcessRow(afterIndex = -1) {
+            if(!itemData[currentItem]) itemData[currentItem] = [];
+            const newNo = `OP-${Date.now().toString().slice(-4)}`;
+            const newP = { id: newNo, name: '신규 공정명 입력' };
+            if(afterIndex === -1) itemData[currentItem].push(newP);
+            else itemData[currentItem].splice(afterIndex + 1, 0, newP);
+            renderProcessTable();
+            saveDataAuto();
+        }
+
+        function removeProcessRow(index) {
+            itemData[currentItem].splice(index, 1);
+            renderProcessTable();
+            saveDataAuto();
+        }
+
+        function moveProcessRow(index, direction) {
+            const list = itemData[currentItem];
+            const target = index + direction;
+            if(target < 0 || target >= list.length) return;
+            const temp = list[index];
+            list[index] = list[target];
+            list[target] = temp;
+            renderProcessTable();
+            saveDataAuto();
+        }
+
+        function handleCadUpload(event) {
+            const file = event.target.files[0];
+            if(file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    if(!cadData[currentItem]) cadData[currentItem] = { image: "", nodes: [] };
+                    cadData[currentItem].image = e.target.result;
+                    renderCadState();
+                    saveDataAuto();
+                }
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function renderCadState() {
+            const data = cadData[currentItem] || { image: "", nodes: [] };
+            const placeholder = document.getElementById('cad-placeholder');
+            const img = document.getElementById('cad-preview-img');
+            if(data.image) {
+                placeholder.classList.add('hidden');
+                img.src = data.image;
+                img.classList.remove('hidden');
+            } else {
+                placeholder.classList.remove('hidden');
+                img.classList.add('hidden');
+                img.src = "";
+            }
+            renderPlacedNodes();
+        }
+
+        function handlePaletteDragStart(e, type) { e.dataTransfer.setData('text/plain', type); }
+        function allowDrop(e) { e.preventDefault(); }
+
+        function dropProcessNode(e) {
+            e.preventDefault();
+            const dropzone = document.getElementById('cad-dropzone');
+            const rect = dropzone.getBoundingClientRect();
+            const x = ((e.clientX - rect.left) / rect.width) * 100;
+            const y = ((e.clientY - rect.top) / rect.height) * 100;
+
+            if(!cadData[currentItem]) cadData[currentItem] = { image: "", nodes: [] };
+
+            const processes = itemData[currentItem] || [];
+            const defaultId = processes.length > 0 ? processes[0].id : '';
+
+            cadData[currentItem].nodes.push({ x, y, processId: defaultId });
+            renderPlacedNodes();
+            saveDataAuto();
+        }
+
+        function renderPlacedNodes() {
+            const layer = document.getElementById('cad-nodes-layer');
+            layer.innerHTML = '';
+            const data = cadData[currentItem] || { nodes: [] };
+            const processes = itemData[currentItem] || [];
+
+            data.nodes.forEach((node, idx) => {
+                const badge = document.createElement('div');
+                badge.className = "absolute transform -translate-x-1/2 -translate-y-1/2 cad-node-badge flex items-center rounded px-2.5 py-1.5";
+                badge.style.left = `${node.x}%`;
+                badge.style.top = `${node.y}%`;
+
+                // 기본 표시 레이블
+                const defaultLabel = document.createElement('span');
+                defaultLabel.className = "cad-node-default-label text-xs font-bold text-white px-1 tracking-wide pointer-events-none";
+                defaultLabel.innerText = node.processId || "(공정 선택)";
+                badge.appendChild(defaultLabel);
+
+                // 마우스 오버 시 나타나는 컨트롤 영역
+                const controls = document.createElement('div');
+                controls.className = "cad-node-controls absolute inset-0 bg-blue-900/95 rounded flex items-center justify-center px-1.5 space-x-1 z-10";
+
+                const select = document.createElement('select');
+                select.className = "bg-blue-800 text-white text-xs font-bold px-1.5 py-1 outline-none rounded cursor-pointer border border-blue-600";
+
+                let opts = `<option value="">(선택)</option>`;
+                processes.forEach(p => {
+                    const sel = p.id === node.processId ? 'selected' : '';
+                    opts += `<option value="${p.id}" ${sel}>${p.id}</option>`;
+                });
+                select.innerHTML = opts;
+
+                select.onchange = (e) => {
+                    cadData[currentItem].nodes[idx].processId = e.target.value;
+                    renderPlacedNodes();
+                    saveDataAuto();
+                };
+
+                const delBtn = document.createElement('button');
+                delBtn.type = "button";
+                delBtn.className = "px-1.5 py-1 text-blue-200 hover:text-rose-300 text-xs";
+                delBtn.innerHTML = '<i class="fa-solid fa-xmark"></i>';
+                delBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    removeNode(idx);
+                };
+
+                controls.appendChild(select);
+                controls.appendChild(delBtn);
+                badge.appendChild(controls);
+
+                initNodeDrag(badge, idx);
+
+                layer.appendChild(badge);
+            });
+        }
+
+        function initNodeDrag(badgeEl, nodeIndex) {
+            badgeEl.onmousedown = function(e) {
+                if(e.target.tagName === 'SELECT' || e.target.tagName === 'OPTION' || e.target.closest('button')) return;
+
+                let startX = e.clientX;
+                let startY = e.clientY;
+
+                const isCtrl = e.ctrlKey || e.metaKey;
+                let targetIdx = nodeIndex;
+
+                if(isCtrl) {
+                    const originalNode = cadData[currentItem].nodes[nodeIndex];
+                    const newNode = { ...originalNode };
+                    cadData[currentItem].nodes.push(newNode);
+                    targetIdx = cadData[currentItem].nodes.length - 1;
+                    renderPlacedNodes();
+                }
+
+                const dropzone = document.getElementById('cad-dropzone');
+                const rect = dropzone.getBoundingClientRect();
+
+                function onMouseMove(moveEvent) {
+                    const dx = moveEvent.clientX - startX;
+                    const dy = moveEvent.clientY - startY;
+                    startX = moveEvent.clientX;
+                    startY = moveEvent.clientY;
+
+                    const currentData = cadData[currentItem].nodes[targetIdx];
+                    if(!currentData) return;
+
+                    let newX = currentData.x + (dx / rect.width) * 100;
+                    let newY = currentData.y + (dy / rect.height) * 100;
+
+                    currentData.x = Math.max(0, Math.min(100, newX));
+                    currentData.y = Math.max(0, Math.min(100, newY));
+
+                    const nodes = dropzone.querySelectorAll('.cad-node-badge');
+                    if(nodes[targetIdx]) {
+                        nodes[targetIdx].style.left = `${currentData.x}%`;
+                        nodes[targetIdx].style.top = `${currentData.y}%`;
+                    }
+                }
+
+                function onMouseUp() {
+                    window.removeEventListener('mousemove', onMouseMove);
+                    window.removeEventListener('mouseup', onMouseUp);
+                    renderPlacedNodes();
+                    saveDataAuto();
+                }
+
+                window.addEventListener('mousemove', onMouseMove);
+                window.addEventListener('mouseup', onMouseUp);
+                e.stopPropagation();
+            };
+        }
+
+        function removeNode(idx) {
+            cadData[currentItem].nodes.splice(idx, 1);
+            renderPlacedNodes();
+            saveDataAuto();
+        }
+    </script>
+</body>
+</html>
