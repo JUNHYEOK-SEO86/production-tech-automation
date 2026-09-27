@@ -18,11 +18,14 @@ export GEMINI_API_KEY="발급받은_API_키"      # Windows(cmd): set GEMINI_API
 
 python generate_images.py                   # prompts.csv → output_images/
 python generate_images.py --csv my.csv --out imgs --delay 5 --retries 5
+python generate_images.py --dry-run         # API 호출 없이 파일명·참조 이미지 계획만 확인
 ```
 
 ## CSV 형식
 
 필수 컬럼: `구분`, `컷 번호`, `대본 매칭 장면`, `나노바나나 프롬프트 (영문 - 16:9 시네마틱 최적화)`
 예시는 `prompts.sample.csv` 참고. 파일명은 `{순번}_{구분}_{컷번호}.png` 형식으로 저장됩니다.
+
+회상 장면(`회상`/`젊은`/`과거`/`30년 전`/`27세` 포함)은 참조 이미지에서 얼굴 특징만 참고하도록 지시합니다.
 
 인물 추가는 `generate_images.py`의 `CHARACTERS` 딕셔너리에 `"이름": "CHAR_04"` 형태로 넣으면 됩니다.

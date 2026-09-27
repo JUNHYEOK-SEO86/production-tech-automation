@@ -11,6 +11,7 @@ prompts.csv 에 적힌 컷별 프롬프트를 읽어 16:9 이미지를 순서대
     export GEMINI_API_KEY="발급받은_API_키"        # Windows: set GEMINI_API_KEY=...
     python generate_images.py
     python generate_images.py --csv my_prompts.csv --out my_images --delay 5
+    python generate_images.py --dry-run          # API 호출 없이 계획만 확인
 """
 
 import argparse
@@ -38,9 +39,17 @@ CHARACTERS = {
     "선옥": "CHAR_01",
     "서연": "CHAR_02",
     "송헌": "CHAR_03",
+    "태준": "CHAR_04",
+    "서우": "CHAR_04",
 }
 
 CONSISTENCY_PREFIX = "Keep the exact same face and outfit from the reference image(s). "
+# 회상(젊은 시절) 장면은 나이·의상이 다르므로 얼굴 특징만 참고하도록 지시
+FLASHBACK_KEYWORDS = ("회상", "젊은", "과거", "30년 전", "27세")
+FLASHBACK_PREFIX = (
+    "Use the reference image(s) only for facial features and identity; "
+    "depict the person at the younger age and in the clothing described below. "
+)
 
 
 def parse_args():
@@ -50,6 +59,7 @@ def parse_args():
     p.add_argument("--delay", type=float, default=3.0, help="성공 후 대기 시간(초) (기본: 3)")
     p.add_argument("--retries", type=int, default=3, help="실패 시 재시도 횟수 (기본: 3)")
     p.add_argument("--api-key", default=None, help="API 키 (미지정 시 GEMINI_API_KEY 환경변수 사용)")
+    p.add_argument("--dry-run", action="store_true", help="API 호출 없이 파일명/참조 이미지 계획만 출력")
     return p.parse_args()
 
 
@@ -95,16 +105,18 @@ def generate_image(client, contents, retries):
 def main():
     args = parse_args()
     api_key = args.api_key or os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY")
-    if not api_key:
+    if not api_key and not args.dry_run:
         sys.exit("[오류] API 키가 없습니다. GEMINI_API_KEY 환경변수를 설정하거나 --api-key 옵션을 사용하세요.")
     if not os.path.exists(args.csv):
         sys.exit(f"[오류] CSV 파일을 찾을 수 없습니다: {args.csv}")
 
-    os.makedirs(args.out, exist_ok=True)
-    client = genai.Client(api_key=api_key)
+    if not args.dry_run:
+        os.makedirs(args.out, exist_ok=True)
+    client = None if args.dry_run else genai.Client(api_key=api_key)
     rows = load_rows(args.csv)
     total = len(rows)
     master_images = {}
+    planned_masters = set()  # dry-run 에서 생성 예정인 마스터 컷
     ok, skipped, failed = 0, 0, []
 
     for idx, row in enumerate(rows, start=1):
@@ -126,17 +138,30 @@ def main():
             skipped += 1
             continue
 
-        print(f"[{idx}/{total} 생성 중] {filename} - {scene_desc}")
+        print(f"[{idx}/{total} {'생성 예정' if args.dry_run else '생성 중'}] {filename} - {scene_desc}")
 
         # 인물 일관성 유지를 위해 등장 인물의 마스터 이미지 첨부
         contents = []
         if not is_master:
+            ref_ids = []
             for name, char_id in CHARACTERS.items():
-                if name in scene_desc and char_id in master_images:
-                    contents.append(master_images[char_id])
-            if contents:
-                print(f"    참조 이미지 {len(contents)}장 첨부")
-                prompt = CONSISTENCY_PREFIX + prompt
+                if name in scene_desc and char_id not in ref_ids:
+                    ref_ids.append(char_id)
+            if args.dry_run:
+                ref_ids = [c for c in ref_ids if c in master_images or c in planned_masters]
+            else:
+                ref_ids = [c for c in ref_ids if c in master_images]
+            is_flashback = any(k in scene_desc for k in FLASHBACK_KEYWORDS)
+            if ref_ids:
+                print(f"    참조 이미지: {', '.join(ref_ids)}" + (" (회상 장면: 얼굴만 참고)" if is_flashback else ""))
+                prompt = (FLASHBACK_PREFIX if is_flashback else CONSISTENCY_PREFIX) + prompt
+                contents.extend(master_images[c] for c in ref_ids if c in master_images)
+
+        if args.dry_run:
+            if is_master:
+                planned_masters.add(cut_no)
+            ok += 1
+            continue
         contents.append(prompt)
 
         img = generate_image(client, contents, args.retries)
@@ -151,6 +176,10 @@ def main():
             master_images[cut_no] = img
         ok += 1
         time.sleep(args.delay)  # 서버 과부하 방지
+
+    if args.dry_run:
+        print(f"\n=== 드라이런 완료: 생성 예정 {ok}컷 / 이미 존재 {skipped}컷 (총 {total}컷) ===")
+        return
 
     print("\n=== 작업 완료 ===")
     print(f"생성 {ok}장 / 건너뜀 {skipped}장 / 실패 {len(failed)}장 (총 {total}컷)")
