@@ -78,25 +78,42 @@ def load_rows(csv_path):
         return [row for row in reader if (row.get(COL_PROMPT) or "").strip()]
 
 
+def is_valid_key(key):
+    """API 키는 영문/숫자/기호(ASCII)로만 이루어져 있고 공백이 없어야 함."""
+    return bool(key) and key.isascii() and key.isprintable() and " " not in key
+
+
 def get_api_key(cli_key):
     """API 키 우선순위: --api-key > 환경변수 > api_key.txt > 직접 입력(입력 시 api_key.txt에 저장)."""
-    key = cli_key or os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY")
+    key = (cli_key or os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY") or "").strip()
     if key:
-        return key.strip()
+        if not is_valid_key(key):
+            sys.exit("[오류] 지정한 API 키에 사용할 수 없는 문자가 들어 있습니다. 키를 다시 확인하세요.")
+        return key
     if os.path.exists(KEY_FILE):
-        with open(KEY_FILE, encoding="utf-8") as f:
+        with open(KEY_FILE, encoding="utf-8-sig", errors="replace") as f:
             key = f.read().strip()
-        if key:
+        if is_valid_key(key):
             return key
+        print("[경고] api_key.txt의 키가 깨져 있어 삭제합니다. 키를 다시 입력해 주세요.")
+        os.remove(KEY_FILE)
     if not sys.stdin.isatty():
         return None
-    import getpass
-    key = getpass.getpass("Gemini API 키를 입력하세요 (화면에 표시되지 않음): ").strip()
-    if key and input("다음에도 쓰도록 api_key.txt에 저장할까요? (y/N): ").strip().lower() == "y":
+    # getpass는 Windows 콘솔에서 붙여넣기 시 글자가 깨질 수 있어 일반 입력 사용
+    while True:
+        key = input("Gemini API 키를 붙여넣고 Enter를 누르세요 (AIza로 시작): ").strip().strip('"').strip("'")
+        if not key:
+            return None
+        if is_valid_key(key):
+            break
+        print("  -> 키에 사용할 수 없는 문자가 섞여 있습니다. 다시 붙여넣어 주세요. (마우스 오른쪽 클릭 또는 Ctrl+V)")
+    if not key.startswith("AIza"):
+        print("  -> 참고: Gemini API 키는 보통 AIza로 시작합니다. 오류가 나면 https://aistudio.google.com/apikey 에서 확인하세요.")
+    if input("다음에도 쓰도록 api_key.txt에 저장할까요? (y/N): ").strip().lower() == "y":
         with open(KEY_FILE, "w", encoding="utf-8") as f:
             f.write(key)
         print(f"  -> 저장됨: {KEY_FILE} (다른 사람과 공유하지 마세요)")
-    return key or None
+    return key
 
 
 def generate_image(client, model, contents, retries):
@@ -109,6 +126,7 @@ def generate_image(client, model, contents, retries):
                 config=types.GenerateContentConfig(
                     response_modalities=["IMAGE"],
                     image_config=types.ImageConfig(aspect_ratio=ASPECT_RATIO),
+                    automatic_function_calling=types.AutomaticFunctionCallingConfig(disable=True),
                 ),
             )
             for candidate in response.candidates or []:
@@ -119,7 +137,15 @@ def generate_image(client, model, contents, retries):
                         return img
             print(f"    -> 응답에 이미지가 없습니다 (시도 {attempt}/{retries})")
         except Exception as e:
-            print(f"    -> [오류] {e} (시도 {attempt}/{retries})")
+            msg = str(e)
+            if "API_KEY_INVALID" in msg or "API key not valid" in msg:
+                if os.path.exists(KEY_FILE):
+                    os.remove(KEY_FILE)
+                sys.exit("\n[중단] API 키가 올바르지 않습니다. 저장된 api_key.txt를 삭제했습니다.\n"
+                         "https://aistudio.google.com/apikey 에서 AIza로 시작하는 키를 확인한 뒤 다시 실행하세요.")
+            if "PERMISSION_DENIED" in msg:
+                sys.exit(f"\n[중단] 권한 오류: 이 키로 {model} 모델을 사용할 수 없습니다.\n{msg}")
+            print(f"    -> [오류] {msg} (시도 {attempt}/{retries})")
         if attempt < retries:
             time.sleep(5 * attempt)  # 점점 길게 대기
     return None
