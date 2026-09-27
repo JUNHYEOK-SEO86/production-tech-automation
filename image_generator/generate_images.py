@@ -25,7 +25,8 @@ from PIL import Image
 from google import genai
 from google.genai import types
 
-MODEL = "gemini-2.5-flash-image"
+MODEL = "gemini-2.5-flash-image"  # 나노바나나. 나노바나나 Pro 사용 시 --model gemini-3-pro-image-preview
+KEY_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "api_key.txt")
 ASPECT_RATIO = "16:9"
 
 # CSV 컬럼 이름
@@ -59,6 +60,7 @@ def parse_args():
     p.add_argument("--delay", type=float, default=3.0, help="성공 후 대기 시간(초) (기본: 3)")
     p.add_argument("--retries", type=int, default=3, help="실패 시 재시도 횟수 (기본: 3)")
     p.add_argument("--api-key", default=None, help="API 키 (미지정 시 GEMINI_API_KEY 환경변수 사용)")
+    p.add_argument("--model", default=MODEL, help=f"이미지 모델 (기본: {MODEL})")
     p.add_argument("--dry-run", action="store_true", help="API 호출 없이 파일명/참조 이미지 계획만 출력")
     return p.parse_args()
 
@@ -76,12 +78,33 @@ def load_rows(csv_path):
         return [row for row in reader if (row.get(COL_PROMPT) or "").strip()]
 
 
-def generate_image(client, contents, retries):
+def get_api_key(cli_key):
+    """API 키 우선순위: --api-key > 환경변수 > api_key.txt > 직접 입력(입력 시 api_key.txt에 저장)."""
+    key = cli_key or os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY")
+    if key:
+        return key.strip()
+    if os.path.exists(KEY_FILE):
+        with open(KEY_FILE, encoding="utf-8") as f:
+            key = f.read().strip()
+        if key:
+            return key
+    if not sys.stdin.isatty():
+        return None
+    import getpass
+    key = getpass.getpass("Gemini API 키를 입력하세요 (화면에 표시되지 않음): ").strip()
+    if key and input("다음에도 쓰도록 api_key.txt에 저장할까요? (y/N): ").strip().lower() == "y":
+        with open(KEY_FILE, "w", encoding="utf-8") as f:
+            f.write(key)
+        print(f"  -> 저장됨: {KEY_FILE} (다른 사람과 공유하지 마세요)")
+    return key or None
+
+
+def generate_image(client, model, contents, retries):
     """이미지 1장을 생성해 PIL Image로 반환. 실패하면 None."""
     for attempt in range(1, retries + 1):
         try:
             response = client.models.generate_content(
-                model=MODEL,
+                model=model,
                 contents=contents,
                 config=types.GenerateContentConfig(
                     response_modalities=["IMAGE"],
@@ -104,9 +127,9 @@ def generate_image(client, contents, retries):
 
 def main():
     args = parse_args()
-    api_key = args.api_key or os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY")
+    api_key = None if args.dry_run else get_api_key(args.api_key)
     if not api_key and not args.dry_run:
-        sys.exit("[오류] API 키가 없습니다. GEMINI_API_KEY 환경변수를 설정하거나 --api-key 옵션을 사용하세요.")
+        sys.exit("[오류] API 키가 없습니다. GEMINI_API_KEY 환경변수, api_key.txt 파일, --api-key 옵션 중 하나로 지정하세요.")
     if not os.path.exists(args.csv):
         sys.exit(f"[오류] CSV 파일을 찾을 수 없습니다: {args.csv}")
 
@@ -164,7 +187,7 @@ def main():
             continue
         contents.append(prompt)
 
-        img = generate_image(client, contents, args.retries)
+        img = generate_image(client, args.model, contents, args.retries)
         if img is None:
             print(f"    -> [실패] {filename}")
             failed.append(filename)
