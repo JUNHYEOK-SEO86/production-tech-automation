@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+data/pe_ams_state.json
+data/images/
+build/
+dist/
+*.spec
+data/docs/
+engine/
+PE_AMS_*.json
